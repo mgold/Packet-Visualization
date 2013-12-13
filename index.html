@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 12px sans-serif;
+  background-color: #555;
+}
+
+
+#loading {
+  fill: grey;
+  font-size: 128px;
+  text-shadow:-1px -1px #000000;
+}
+
+.brush .extent {
+  stroke: #fff;
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: black;
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+    font-family:sans-serif;
+    font-size:11px;
+}
+
+</style>
+<body>
+<script src="d3.v3.min.js"></script>
+<script src="topojson.v0.min.js"></script>
+<script>
+
+var heatmap_width = 841,
+    marginL = 50;
+
+var x = d3.time.scale()
+     .range([String(marginL), String(heatmap_width + marginL)])
+
+var xAxis = d3.svg.axis()
+     .scale(x)
+     .tickFormat(d3.time.format("%H:%M"));
+
+var yU = d3.scale.linear()
+     .domain([0, 1500])
+     .range([500, 0])
+
+var yD = d3.scale.linear()
+     .domain([0, 1500])
+     .range([1060, 560])
+
+var yUAxis = d3.svg.axis()
+     .scale(yU)
+     .orient("left")
+
+var yDAxis = d3.svg.axis()
+     .scale(yD)
+     .orient("left")
+
+var svg = d3.select("body").append("svg")
+    .attr("width", "1920")
+    .attr("height", "1080")
+
+svg.append("svg:image")
+    .attr("xlink:href", "up.0-199.png")
+    .attr("width", String(heatmap_width))
+    .attr("height", "500")
+    .attr("x", String(marginL))
+    .attr("y", "0")
+
+svg.append("svg:image")
+    .attr("xlink:href", "dn.0-199.png")
+    .attr("width", String(heatmap_width))
+    .attr("height", "500")
+    .attr("x", String(marginL))
+    .attr("y", "560")
+
+svg.append("text")
+    .attr("id", "loading")
+    .attr("x", "175")
+    .attr("y", "250")
+    .text("LOADING")
+
+svg.append("g")
+    .attr("class", "y axis")
+    .attr("transform", "translate(45,0)")
+    .style("fill", "black")
+    .call(yUAxis)
+  .append("text")
+    .attr("transform", "translate(-6, 515)")
+    .style("text-anchor", "end")
+    .style("fill", "black")
+    .text("Uploads");
+
+svg.append("g")
+    .attr("class", "y axis")
+    .attr("transform", "translate(45,0)")
+    .style("fill", "black")
+    .call(yDAxis)
+  .append("text")
+    .attr("transform", "translate(8, 555)")
+    .style("text-anchor", "end")
+    .style("fill", "black")
+    .text("Downloads");
+
+
+    var grid = svg.append("g")
+    .attr("transform", "translate(1100,450)")
+
+/////// Map
+
+var projection = d3.geo.equirectangular()
+    .translate([425, 207])
+    //.center([0, -4])
+    .scale(135);
+
+var path = d3.geo.path()
+    .projection(projection);
+
+var map = svg.append("g")
+    .attr("transform", "translate(1000,0)")
+
+map.append("rect")
+    //.attr("x", 580)
+    //.attr("y", -20)
+    .attr("width", 850)
+    .attr("height", 420)
+    .style("fill", "#080B30");
+
+d3.json("world-110m2.json", function(error, topology) {
+    map.selectAll("path")
+          .data(topojson.object(topology, topology.objects.countries)
+              .geometries)
+        .enter()
+          .append("path")
+          .attr("d", path)
+});
+
+//////// Brush
+
+var brush_area = svg.append("g")
+    .attr("class", "brush")
+
+var brush = d3.svg.brush()
+
+var color_cutoffs = ["0", "1", "2", "≤6", "≤18", "≤131", ">131"].reverse(),
+    colors = ["#000000", "#000045", "#0000AD", "#009C00", "#ADD900", "#D98600", "#E80000"].reverse()
+
+var scale_top = 10;
+
+for (var i = color_cutoffs.length; i--;){
+    svg.append("rect")
+        .attr("width", "20")
+        .attr("height", "14")
+        .attr("x", String(heatmap_width + marginL + 5))
+        .attr("y", String(i*20 + scale_top))
+        .attr("fill", colors[i]);
+
+    svg.append("text")
+        .text(color_cutoffs[i])
+        .attr("x", String(heatmap_width + marginL + 30))
+        .attr("y", String(i*20 + scale_top + 11))
+}
+
+d3.json("data.0-199.json", function(error, data){
+    d3.select("#loading").remove()
+
+    var start_time = new Date(1000*data.start_time)
+    x.domain([start_time, new Date(1000*(parseInt(data.start_time)+heatmap_width))]);
+
+    brush_area.call(brush
+        .x(x)
+        .y(d3.scale.identity().domain([0, 1080]))
+        .on("brush", function() {
+            svg.select(".brush").selectAll("rect")
+                .attr("height", "1060")
+                .attr("y", "0")
+            })
+        .on("brushend", function(){
+            var extent = brush.extent()
+            var t0 = extent[0][0]
+            var t1  = extent[1][0]
+            var pix = (t1 - t0)
+            console.log(pix, pix*data.bin_size)
+            var i0 = (t0 - start_time) / 1000
+            var i1 = (t1 - start_time) / 1000
+            var sel = data.data.slice(i0, i1)
+
+            if (sel.length == 0) {
+                map.selectAll(".point").data([]).exit().remove();
+                grid.selectAll(".square").data([]).exit().remove();
+                return; }
+            var summed = sel[0]
+            for (var i = 1; i < sel.length; i++){
+                var snapshot = sel[i];
+                for (var ip in snapshot){
+                   if (ip in summed){
+                       var base = summed[ip];
+                       var newbie = snapshot[ip];
+                       base["d"] += newbie["d"];
+                       base["u"] += newbie["u"];
+                    }else{
+                      summed[ip] = snapshot[ip];
+                    }
+                }
+            }
+            dataSet = [];
+            maxUp = 0;
+            maxDown = 0;
+            ips = Array(256);
+            for (var i = 256; i--;){
+                ips[i] = 0;
+            }
+            for (var ip in summed){
+                var newbie = summed[ip]
+                maxUp = Math.max(maxUp, newbie["u"])
+                maxDown = Math.max(maxDown, newbie["d"])
+                ips[parseInt(ip.slice(0, ip.indexOf(".")))] += newbie["d"]
+                dataSet.push(newbie)
+            }
+            var maxToIp = Math.log(Math.max.apply(null, ips))
+
+            maxUp = Math.log(maxUp);
+
+            map.selectAll(".point")
+                .data(dataSet)
+                .enter()
+                .append("path")
+                .attr("class", "point")
+                .attr("d", d3.svg.symbol().type("circle").size(8))
+                .attr("transform", function(d) {
+                    if (d.ln == "x"){
+                        return "translate(0, -100)"
+                    } else {
+                        var loc = projection([d.ln, d.lt])
+                        return "translate(" + String(loc[0]+1) +"," + String(loc[1]-2.5) + ")"
+                    }})
+                .style("fill", "white")
+                .style("opacity", function(d){
+                        if (d["u"] == 0) return "0"
+                        return String(Math.log(d["u"]) / maxUp);
+                    });
+
+            map.selectAll(".point").data(dataSet).exit().remove();
+
+            var side = 35;
+            function float2color( percentage ) {
+                var color_part_dec = 255 * percentage;
+                var color_part_hex = Number(parseInt( color_part_dec , 10)).toString(16);
+                return "#" + color_part_hex + color_part_hex + color_part_hex;
+            }
+            grid.selectAll(".square")
+                .data(ips)
+                .enter()
+                .append("rect")
+                .attr("class", "square")
+                .attr("width", side)
+                .attr("height", side)
+                .attr("transform", function(d, i) {
+                        var x = side * (i % 16)
+                        var y = side * Math.floor(i / 16)
+                        return "translate("+String(x)+","+String(y)+")";
+                    })
+                .style("fill", function(d, i) {
+                    if (d == 0) return "black";
+                    var color_part_dec = 255 * Math.log(d) / maxToIp;
+                    var color_part_hex = Number(parseInt( color_part_dec , 10)).toString(16);
+                    return "#" + color_part_hex + color_part_hex + color_part_hex;
+                })
+            for (var i = 0; i < 256; i++){
+                var x = side * (i % 16)
+                var y = side * Math.floor(i / 16)
+                console.log(Math.log(ips[i]) / maxToIp)
+                var c = Math.log(ips[i]) / maxToIp > 0.6 ? "black" : "white"
+                grid.append("text")
+                .style("fill", c)
+                .attr("class", "square")
+                .attr("transform", "translate("+String(x)+","+String(y+10)+")")
+                .text(String(i))
+            }
+
+        }))
+
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0, 520)")
+        .call(xAxis)
+      .append("text")
+        .attr("transform", "translate(50, -8)")
+        .style("fill", "black")
+        .text(d3.time.format("%B %e, %Y")(start_time))
+
+    svg.selectAll(".x").selectAll("line").attr("y1", "-6")
+
+    svg.append("text")
+        .attr("transform", "translate("+String(marginL + heatmap_width)+", 512)")
+        .style("fill", "black")
+        .text("1 horizontal pixel = "+String(data.bin_size)+" seconds")
+        .style("text-anchor", "end")
+
+});
+
+</script>
