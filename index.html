@@ -124,7 +124,7 @@ svg.append("text")
     .text("Packet Size (bytes)")
 
     var grid = svg.append("g")
-    .attr("transform", "translate(1100,450)")
+    .attr("transform", "translate(1100,500)")
 
 /////// Map
 
@@ -167,17 +167,23 @@ var color_cutoffs = ["0", "1", "2", "≤6", "≤18", "≤131", ">131"].reverse()
 
 var scale_top = 10;
 
+svg.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("x", "-140")
+    .attr("y", String(heatmap_width + marginL + 15))
+    .text("Packets per time & size")
+
 for (var i = color_cutoffs.length; i--;){
     svg.append("rect")
         .attr("width", "20")
         .attr("height", "14")
-        .attr("x", String(heatmap_width + marginL + 5))
+        .attr("x", String(heatmap_width + marginL + 20))
         .attr("y", String(i*20 + scale_top))
         .attr("fill", colors[i]);
 
     svg.append("text")
         .text(color_cutoffs[i])
-        .attr("x", String(heatmap_width + marginL + 30))
+        .attr("x", String(heatmap_width + marginL + 45))
         .attr("y", String(i*20 + scale_top + 11))
 }
 
@@ -268,6 +274,12 @@ d3.json("data.0-199.json", function(error, data){
                 var color_part_hex = Number(parseInt( color_part_dec , 10)).toString(16);
                 return "#" + color_part_hex + color_part_hex + color_part_hex;
             }
+            grid.append("text")
+                .attr("x", "0")
+                .attr("y", "-10")
+                .attr("class", "square")
+                .style("fill", "white")
+                .text("Relative densities of first octets of IP addresses of selection");
             grid.selectAll(".square")
                 .data(ips)
                 .enter()
