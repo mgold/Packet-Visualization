@@ -207,7 +207,6 @@ d3.json("data.0-199.json", function(error, data){
             var t0 = extent[0][0]
             var t1  = extent[1][0]
             var pix = (t1 - t0)
-            console.log(pix, pix*data.bin_size)
             var i0 = (t0 - start_time) / 1000
             var i1 = (t1 - start_time) / 1000
             var sel = data.data.slice(i0, i1)
@@ -289,26 +288,43 @@ d3.json("data.0-199.json", function(error, data){
                 .attr("width", side)
                 .attr("height", side)
                 .attr("transform", function(d, i) {
-                        var x = side * (i % 16)
-                        var y = side * Math.floor(i / 16)
-                        return "translate("+String(x)+","+String(y)+")";
-                    })
+                    var n, s, t;
+                    var x = 0, y = 0;
+                    for (n = 0, s = 1; i || !(n & 1); n++, s *= 2, i >>= 2)
+                        switch (i & 3)
+                        {
+                            case 0: t = y; y = x; x = t; break;
+                            case 1: y += s; break;
+                            case 2: x += s; y += s; break;
+                            case 3: t = 2*s - y - 1; y = s - x - 1; x = t; break;
+                        }
+                    return "translate("+String(side*y)+","+String(side*x)+")";
+                })
                 .style("fill", function(d, i) {
                     if (d == 0) return "black";
                     var color_part_dec = 255 * Math.log(d) / maxToIp;
                     var color_part_hex = Number(parseInt( color_part_dec , 10)).toString(16);
                     return "#" + color_part_hex + color_part_hex + color_part_hex;
                 })
-            for (var i = 0; i < 256; i++){
-                var x = side * (i % 16)
-                var y = side * Math.floor(i / 16)
-                console.log(Math.log(ips[i]) / maxToIp)
-                var c = Math.log(ips[i]) / maxToIp > 0.6 ? "black" : "white"
+
+            var n, s, t;
+            for (var j = 0; j < 256; j++){
+                var x = 0, y = 0, i = j;
+                for (n = 0, s = 1; i || !(n & 1); n++, s *= 2, i >>= 2)
+                    switch (i & 3)
+                    {
+                        case 0: t = y; y = x; x = t; break;
+                        case 1: y += s; break;
+                        case 2: x += s; y += s; break;
+                        case 3: t = 2*s - y - 1; y = s - x - 1; x = t; break;
+                    }
+                x *= side; y *= side;
+                var c = Math.log(ips[j]) / maxToIp > 0.6 ? "black" : "white"
                 grid.append("text")
                 .style("fill", c)
                 .attr("class", "square")
-                .attr("transform", "translate("+String(x)+","+String(y+10)+")")
-                .text(String(i))
+                .attr("transform", "translate("+String(y)+","+String(x+10)+")")
+                .text(String(j))
             }
 
         }))
