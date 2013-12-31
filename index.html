@@ -221,9 +221,9 @@ d3.json("data/data.0-199.json", function(error, data){
             grid.selectAll(".square").data([]).exit().remove();
             //TODO: Easy optimization: store the summed values
             sel = data.data;
-            }
-        var summed = sel[0]
-        for (var i = 1; i < sel.length; i++){
+        }
+        var summed = [];
+        for (var i = 0; i < sel.length; i++){
             var snapshot = sel[i];
             for (var ip in snapshot){
                if (ip in summed){
