@@ -287,6 +287,7 @@ d3.json("data/data.0-199.json", function(error, data){
             .attr("class", "square")
             .style("fill", "white")
             .text("Relative densities of first octets of IP addresses of selection");
+        grid.selectAll(".square").remove();
         grid.selectAll(".square")
             .data(ips)
             .enter()
@@ -314,7 +315,6 @@ d3.json("data/data.0-199.json", function(error, data){
                 return "#" + color_part_hex + color_part_hex + color_part_hex;
             })
 
-        grid.selectAll(".square text").remove();
         var n, s, t;
         for (var j = 0; j < 256; j++){
             var x = 0, y = 0, i = j;
