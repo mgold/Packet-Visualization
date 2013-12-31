@@ -284,9 +284,8 @@ d3.json("data/data.0-199.json", function(error, data){
         grid.append("text")
             .attr("x", "0")
             .attr("y", "-10")
-            .attr("class", "square")
             .style("fill", "white")
-            .text("Relative densities of first octets of IP addresses of selection");
+            .text("Relative densities of first octets of IP addresses of selection. More info in tooltips.");
         grid.selectAll(".square").remove();
         grid.selectAll(".square")
             .data(ips)
@@ -314,6 +313,8 @@ d3.json("data/data.0-199.json", function(error, data){
                 var color_part_hex = Number(parseInt( color_part_dec , 10)).toString(16);
                 return "#" + color_part_hex + color_part_hex + color_part_hex;
             })
+            .append("svg:title")
+               .text(function(d, i) { return d3.format(",d")(d) +" packets from or to "+i+"/8"; });
 
         var n, s, t;
         for (var j = 0; j < 256; j++){
