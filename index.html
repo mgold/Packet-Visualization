@@ -70,14 +70,14 @@ var svg = d3.select("body").append("svg")
     .attr("height", "1080")
 
 svg.append("svg:image")
-    .attr("xlink:href", "up.0-199.png")
+    .attr("xlink:href", "data/up.0-199.png")
     .attr("width", String(heatmap_width))
     .attr("height", "500")
     .attr("x", String(marginL))
     .attr("y", "0")
 
 svg.append("svg:image")
-    .attr("xlink:href", "dn.0-199.png")
+    .attr("xlink:href", "data/dn.0-199.png")
     .attr("width", String(heatmap_width))
     .attr("height", "500")
     .attr("x", String(marginL))
@@ -150,7 +150,7 @@ map.append("rect")
 d3.json("world-110m2.json", function(error, topology) {
     map.selectAll("path")
           .data(topojson.object(topology, topology.objects.countries)
-              .geometries)
+                .geometries)
         .enter()
           .append("path")
           .attr("d", path)
@@ -188,7 +188,7 @@ for (var i = color_cutoffs.length; i--;){
         .attr("y", String(i*20 + scale_top + 11))
 }
 
-d3.json("data.0-199.json", function(error, data){
+d3.json("data/data.0-199.json", function(error, data){
     d3.select("#loading").remove()
 
     var start_time = new Date(1000*data.start_time)
@@ -202,114 +202,101 @@ d3.json("data.0-199.json", function(error, data){
                 .attr("height", "1060")
                 .attr("y", "0")
             })
-        .on("brushend", function(){
-            var extent = brush.extent()
-            var t0 = extent[0][0]
-            var t1  = extent[1][0]
-            var pix = (t1 - t0)
-            var i0 = (t0 - start_time) / 1000
-            var i1 = (t1 - start_time) / 1000
-            var sel = data.data.slice(i0, i1)
+        .on("brushend", reeval)
+    );
 
-            if (sel.length == 0) {
-                map.selectAll(".point").data([]).exit().remove();
-                grid.selectAll(".square").data([]).exit().remove();
-                return; }
-            var summed = sel[0]
-            for (var i = 1; i < sel.length; i++){
-                var snapshot = sel[i];
-                for (var ip in snapshot){
-                   if (ip in summed){
-                       var base = summed[ip];
-                       var newbie = snapshot[ip];
-                       base["d"] += newbie["d"];
-                       base["u"] += newbie["u"];
-                    }else{
-                      summed[ip] = snapshot[ip];
-                    }
+    reeval(); // on program start
+
+    function reeval(){
+        var extent = brush.extent()
+        var t0 = extent[0][0]
+        var t1  = extent[1][0]
+        var pix = (t1 - t0)
+        var i0 = (t0 - start_time) / 1000
+        var i1 = (t1 - start_time) / 1000
+        var sel = data.data.slice(i0, i1)
+
+        if (sel.length == 0) {
+            map.selectAll(".point").data([]).exit().remove();
+            grid.selectAll(".square").data([]).exit().remove();
+            //TODO: Easy optimization: store the summed values
+            sel = data.data;
+            }
+        var summed = sel[0]
+        for (var i = 1; i < sel.length; i++){
+            var snapshot = sel[i];
+            for (var ip in snapshot){
+               if (ip in summed){
+                   var base = summed[ip];
+                   var newbie = snapshot[ip];
+                   base["d"] += newbie["d"];
+                   base["u"] += newbie["u"];
+                }else{
+                  summed[ip] = snapshot[ip];
                 }
             }
-            dataSet = [];
-            maxUp = 0;
-            maxDown = 0;
-            ips = Array(256);
-            for (var i = 256; i--;){
-                ips[i] = 0;
-            }
-            for (var ip in summed){
-                var newbie = summed[ip]
-                maxUp = Math.max(maxUp, newbie["u"])
-                maxDown = Math.max(maxDown, newbie["d"])
-                ips[parseInt(ip.slice(0, ip.indexOf(".")))] += newbie["d"]
-                dataSet.push(newbie)
-            }
-            var maxToIp = Math.log(Math.max.apply(null, ips))
+        }
+        dataSet = [];
+        maxUp = 0;
+        maxDown = 0;
+        ips = Array(256);
+        for (var i = 256; i--;){
+            ips[i] = 0;
+        }
+        for (var ip in summed){
+            var newbie = summed[ip]
+            maxUp = Math.max(maxUp, newbie["u"])
+            maxDown = Math.max(maxDown, newbie["d"])
+            ips[parseInt(ip.slice(0, ip.indexOf(".")))] += newbie["d"]
+            dataSet.push(newbie)
+        }
+        var maxToIp = Math.log(Math.max.apply(null, ips))
 
-            maxUp = Math.log(maxUp);
+        maxUp = Math.log(maxUp);
 
-            map.selectAll(".point")
-                .data(dataSet)
-                .enter()
-                .append("path")
-                .attr("class", "point")
-                .attr("d", d3.svg.symbol().type("circle").size(8))
-                .attr("transform", function(d) {
-                    if (d.ln == "x"){
-                        return "translate(0, -100)"
-                    } else {
-                        var loc = projection([d.ln, d.lt])
-                        return "translate(" + String(loc[0]+1) +"," + String(loc[1]-2.5) + ")"
-                    }})
-                .style("fill", "white")
-                .style("opacity", function(d){
-                        if (d["u"] == 0) return "0"
-                        return String(Math.log(d["u"]) / maxUp);
-                    });
+        map.selectAll(".point")
+            .data(dataSet)
+            .enter()
+            .append("path")
+            .attr("class", "point")
+            .attr("d", d3.svg.symbol().type("circle").size(8))
+            .attr("transform", function(d) {
+                if (d.ln == "x"){
+                    return "translate(0, -100)"
+                } else {
+                    var loc = projection([d.ln, d.lt])
+                    return "translate(" + String(loc[0]+1) +"," + String(loc[1]-2.5) + ")"
+                }})
+            .style("fill", "white")
+            .style("opacity", function(d){
+                    if (d["u"] == 0) return "0"
+                    return String(Math.log(d["u"]) / maxUp);
+                });
 
-            map.selectAll(".point").data(dataSet).exit().remove();
+        map.selectAll(".point").data(dataSet).exit().remove();
 
-            var side = 35;
-            function float2color( percentage ) {
-                var color_part_dec = 255 * percentage;
-                var color_part_hex = Number(parseInt( color_part_dec , 10)).toString(16);
-                return "#" + color_part_hex + color_part_hex + color_part_hex;
-            }
-            grid.append("text")
-                .attr("x", "0")
-                .attr("y", "-10")
-                .attr("class", "square")
-                .style("fill", "white")
-                .text("Relative densities of first octets of IP addresses of selection");
-            grid.selectAll(".square")
-                .data(ips)
-                .enter()
-                .append("rect")
-                .attr("class", "square")
-                .attr("width", side)
-                .attr("height", side)
-                .attr("transform", function(d, i) {
-                    var n, s, t;
-                    var x = 0, y = 0;
-                    for (n = 0, s = 1; i || !(n & 1); n++, s *= 2, i >>= 2)
-                        switch (i & 3)
-                        {
-                            case 0: t = y; y = x; x = t; break;
-                            case 1: y += s; break;
-                            case 2: x += s; y += s; break;
-                            case 3: t = 2*s - y - 1; y = s - x - 1; x = t; break;
-                        }
-                    return "translate("+String(side*y)+","+String(side*x)+")";
-                })
-                .style("fill", function(d, i) {
-                    if (d == 0) return "black";
-                    var color_part_dec = 255 * Math.log(d) / maxToIp;
-                    var color_part_hex = Number(parseInt( color_part_dec , 10)).toString(16);
-                    return "#" + color_part_hex + color_part_hex + color_part_hex;
-                })
-
-            var n, s, t;
-            for (var j = 0; j < 256; j++){
-                var x = 0, y = 0, i = j;
+        var side = 35;
+        function float2color( percentage ) {
+            var color_part_dec = 255 * percentage;
+            var color_part_hex = Number(parseInt( color_part_dec , 10)).toString(16);
+            return "#" + color_part_hex + color_part_hex + color_part_hex;
+        }
+        grid.append("text")
+            .attr("x", "0")
+            .attr("y", "-10")
+            .attr("class", "square")
+            .style("fill", "white")
+            .text("Relative densities of first octets of IP addresses of selection");
+        grid.selectAll(".square")
+            .data(ips)
+            .enter()
+            .append("rect")
+            .attr("class", "square")
+            .attr("width", side)
+            .attr("height", side)
+            .attr("transform", function(d, i) {
+                var n, s, t;
+                var x = 0, y = 0;
                 for (n = 0, s = 1; i || !(n & 1); n++, s *= 2, i >>= 2)
                     switch (i & 3)
                     {
@@ -318,16 +305,37 @@ d3.json("data.0-199.json", function(error, data){
                         case 2: x += s; y += s; break;
                         case 3: t = 2*s - y - 1; y = s - x - 1; x = t; break;
                     }
-                x *= side; y *= side;
-                var c = Math.log(ips[j]) / maxToIp > 0.6 ? "black" : "white"
-                grid.append("text")
-                .style("fill", c)
-                .attr("class", "square")
-                .attr("transform", "translate("+String(y)+","+String(x+10)+")")
-                .text(String(j))
-            }
+                return "translate("+String(side*y)+","+String(side*x)+")";
+            })
+            .style("fill", function(d, i) {
+                if (d == 0) return "black";
+                var color_part_dec = 255 * Math.log(d) / maxToIp;
+                var color_part_hex = Number(parseInt( color_part_dec , 10)).toString(16);
+                return "#" + color_part_hex + color_part_hex + color_part_hex;
+            })
 
-        }))
+        grid.selectAll(".square text").remove();
+        var n, s, t;
+        for (var j = 0; j < 256; j++){
+            var x = 0, y = 0, i = j;
+            for (n = 0, s = 1; i || !(n & 1); n++, s *= 2, i >>= 2)
+                switch (i & 3)
+                {
+                    case 0: t = y; y = x; x = t; break;
+                    case 1: y += s; break;
+                    case 2: x += s; y += s; break;
+                    case 3: t = 2*s - y - 1; y = s - x - 1; x = t; break;
+                }
+            x *= side; y *= side;
+            var c = Math.log(ips[j]) / maxToIp > 0.6 ? "black" : "white"
+            grid.append("text")
+            .style("fill", c)
+            .attr("class", "square")
+            .attr("transform", "translate("+String(y)+","+String(x+10)+")")
+            .text(String(j))
+        }
+
+    }
 
     svg.append("g")
         .attr("class", "x axis")
