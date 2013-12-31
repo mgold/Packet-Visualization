@@ -37,6 +37,7 @@ body {
 <p>More information in the <a href=./paper.pdf>paper</a>. Drag over these images to update the views on the right.</p>
 <script src="d3.v3.min.js"></script>
 <script src="topojson.v0.min.js"></script>
+<script src="lookup.js"></script>
 <script>
 
 var heatmap_width = 841,
@@ -314,7 +315,11 @@ d3.json("data/data.0-199.json", function(error, data){
                 return "#" + color_part_hex + color_part_hex + color_part_hex;
             })
             .append("svg:title")
-               .text(function(d, i) { return d3.format(",d")(d) +" packets from or to "+i+"/8"; });
+               .text(function(d, i) {
+                   var looked_up = lookup_IP(i);
+                   var info = looked_up == undefined ? "" : " ("+looked_up+")"
+                   return d3.format(",d")(d) +" packets from or to "+i+"/8" + info;
+                   });
 
         var n, s, t;
         for (var j = 0; j < 256; j++){
