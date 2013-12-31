@@ -14,5 +14,14 @@ Hilbert curve.
 ## Requirements
 To run the visualization, download into the cloned repo the following.
 * [D3 (minimized)](http://d3js.org/d3.v3.min.js)
-* [world map](https://gist.github.com/d3noob/5193723/raw/world-110m2.json)
-* [topojson v0](http://d3js.org/topojson.v0.min.js) (not v1!)
+* [World Map](https://gist.github.com/d3noob/5193723/raw/world-110m2.json)
+* [Topojson v0](http://d3js.org/topojson.v0.min.js) (not v1!)
+
+## Technical Notes
+
+This viz was made for the final project of COMP 116, Computer Security, with
+Ming Chow at Tufts University, Fall 2013. I have addressed the biggest and most
+visible concerns after turning it in, but there are still some rough edges.
+Please excuse the haphazard code and the occasional grammatical error in the
+paper. Also, the `svg` script is more fragile than I would like when it comes
+to reducing the bin size, something about modulus.
