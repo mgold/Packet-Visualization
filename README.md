@@ -8,8 +8,8 @@ original data was 12.5GB of raw pcap files representing nearly 10 million
 packets. Compression and binning techniques (see the pdf) reduce this
 information more than one-thousandfold, to 7.1MB of JSON and two mid-sized png
 images with over 5000 numbers per inch. The visualizations are customized to
-the data, including a world map of geoIPs and IP block distributions arranged
-on a Hilbert curve.
+the data, including a world map of geoIPs and IP block distributions of uploads
+arranged on a Hilbert curve.
 
 ## Requirements
 To run the visualization, download into the cloned repo the following.
