@@ -46,8 +46,11 @@ var heatmap_width = 841,
 var x = d3.time.scale()
      .range([String(marginL), String(heatmap_width + marginL)])
 
+var xA = d3.time.scale()
+     .range([String(marginL), String(heatmap_width + marginL)])
+
 var xAxis = d3.svg.axis()
-     .scale(x)
+     .scale(xA)
      .tickFormat(d3.time.format("%H:%M"));
 
 var yU = d3.scale.linear()
@@ -193,7 +196,8 @@ d3.json("data/data.0-199.json", function(error, data){
     d3.select("#loading").remove()
 
     var start_time = new Date(1000*data.start_time)
-    x.domain([start_time, new Date(1000*(parseInt(data.start_time)+heatmap_width))]);
+    x.domain([start_time, new Date(1000*(+data.start_time + heatmap_width))]);
+    xA.domain([start_time, new Date(1000*(+data.start_time + heatmap_width*data.bin_size))]);
 
     brush_area.call(brush
         .x(x)
@@ -219,8 +223,8 @@ d3.json("data/data.0-199.json", function(error, data){
         var use_entire = sel.length == 0;
 
         if (use_entire) {
-            map.selectAll(".point").data([]).exit().remove();
-            grid.selectAll(".square").data([]).exit().remove();
+            map.selectAll(".point").remove();
+            grid.selectAll(".square").remove();
             //TODO: Easy optimization: store the summed values
             sel = data.data;
         }
@@ -284,12 +288,11 @@ d3.json("data/data.0-199.json", function(error, data){
             return "#" + color_part_hex + color_part_hex + color_part_hex;
         }
         var descriptor = use_entire ? "entire dataset" : "selection"
-        grid.selectAll(".square").remove();
+        grid.selectAll("*").remove();
         grid.append("text")
             .attr("x", "0")
             .attr("y", "-10")
             .style("fill", "white")
-            .attr("class", "square")
             .text("Relative densities of first octets of IP addresses uploaded to in "+ descriptor +". More info in tooltips.");
         grid.selectAll(".square")
             .data(ips)
@@ -339,7 +342,6 @@ d3.json("data/data.0-199.json", function(error, data){
             var c = Math.log(ips[j]) / maxToIp > 0.6 ? "black" : "white"
             grid.append("text")
             .style("fill", c)
-            .attr("class", "square")
             .attr("transform", "translate("+String(y)+","+String(x+10)+")")
             .text(String(j))
         }
