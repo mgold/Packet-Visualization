@@ -10,8 +10,23 @@ begin
 rescue
     abort "Must supply preprocessed file on command line."
 end
+begin
+    case ARGV[1]
+    when "32"
+        key_regex = /.*/
+    when "24"
+        key_regex = /^[0-9]*\.[0-9]*\.[0-9]*/
+    when "16"
+        key_regex = /^[0-9]*\.[0-9]*/
+    else
+        raise ArgumentError
+    end
+rescue
+    abort "Must supply subnet on command line: 16, 24, or 32, got: "+ARGV[1]
+end
 
-dat_file = "bandwidth."+pcapRange+".csv"
+
+dat_file = "bandwidth."+pcapRange+".s"+ARGV[1]+".csv"
 
 class Timestamped
 # Representes a comparable value with auxillary timestamp data
@@ -69,10 +84,12 @@ CSV.foreach(ppFile) do |ut,cap,ip,dir,cnt|
         dn_h.clear
     end
 
+    # use only the first two octets
+    key = ip[key_regex]
     if dir == "up"
-        up_h[ip] += cnt.to_i
+        up_h[key] += cnt.to_i
     else
-        dn_h[ip] += cnt.to_i
+        dn_h[key] += cnt.to_i
     end
 end
 

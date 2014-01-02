@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<title>Benchmark Performance</title>
+		<title>Bandwidth vs. Time Per Host</title>
 		<script type="text/javascript" src="d3.v3.min.js"></script>
 		<style type="text/css">
             .axis path,
@@ -45,9 +45,15 @@
 		</style>
 	</head>
 	<body>
+        <svg></svg>
+        <div id="subnet_controls">
+          <input name="mode" type="radio" value="s16" id="subnet_16"><label for="subnet_16"> /16</label>
+          <input name="mode" type="radio" value="s24" id="subnet_24"><label for="subnet_24"> /24</label>
+          <input name="mode" type="radio" value="s32" id="subnet_32" checked><label for="subnet_32"> /32</label>
+        </div>
 		<script type="text/javascript">
 
-            var datafile = "data/bandwidth.0-199.csv";
+            var datafile = "data/bandwidth.0-199.";
 
 			var w = 1300;
 			var h = 600;
@@ -73,15 +79,54 @@
                                             return "";
                                         })
 
-			var svg = d3.select("body")
-						.append("svg")
+			var svg = d3.select("svg")
 						.attr("width", axis_w+w+rightroom)
 						.attr("height", headroom+h+footroom);
             var plot = svg.append("g")
                         .attr("transform", "translate("+axis_w+","+headroom+")")
 
-            d3.csv(datafile)
-                .row(function(d) { return {ip: d.ip, up: +d.up, upt: new Date(1000* +d.upt), dn: +d.dn, dnt: new Date(1000* +d.dnt)} })
+            svg.append("text")
+                .attr("transform", "translate("+String(axis_w + (w/2))+",10)")
+                .attr("class", "label")
+                .attr("text-anchor", "middle")
+                .append("tspan")
+                    .text("Maximum bandwidth vs. time, for ")
+                .append("tspan")
+                    .attr("class", "up")
+                    .style("opacity", 1)
+                    .text("uploads")
+                .append("tspan")
+                    .style("fill", "black")
+                    .text(" and ")
+                .append("tspan")
+                    .attr("class", "dn")
+                    .style("opacity", 1)
+                    .text("downloads")
+                .append("tspan")
+                    .style("fill", "black")
+                    .text(", per foreign host (connected by ")
+                .append("tspan")
+                    .style("font-weight", "bold")
+                    .text("line")
+                .append("tspan")
+                    .style("font-weight", "normal")
+                    .text(", IP on hover)")
+
+            var axes_done = false;
+
+            d3.selectAll("#subnet_controls input[name=mode]").on("change", function() {
+                reeval(datafile+this.value+".csv");
+            })
+
+            reeval(datafile+"s32.csv"); //on startup
+            function reeval(file_name){
+            d3.csv(file_name)
+                .row(function(d) { return { ip: d.ip
+                                          , up: +d.up
+                                          , upt: new Date(1000* +d.upt)
+                                          , dn: +d.dn
+                                          , dnt: new Date(1000* +d.dnt)
+                                          } })
                 .get(function(error, rows) {
                         var minDate = new Date("Jan 1 1970")
                         x.domain([d3.min(rows, function(d){ if (d.upt < minDate){
@@ -92,12 +137,14 @@
                                  ,d3.max(rows, function(d){ return Math.max(d.upt, d.dnt) })])
                         y.domain([10, d3.max(rows, function(d){ return Math.max(d.up, d.dn) })])
 
+                        plot.selectAll(".vary").remove();
+
                         plot.selectAll(".connect")
                             .data(rows)
                             .enter()
                             .append("line")
                             .filter(function (d) {return d.up != 0 && d.dn != 0;})
-                            .attr("class", "connect")
+                            .attr("class", "connect vary")
                             .attr("x1", function(d) { return x(d.upt) })
                             .attr("x2", function(d) { return x(d.dnt) })
                             .attr("y1", function(d) { return y(d.up) })
@@ -108,7 +155,7 @@
                             .enter()
                             .append("circle")
                             .filter(function (d) {return d.up != 0})
-                            .attr("class", "up")
+                            .attr("class", "up vary")
                             .attr("cx", function(d) { return x(d.upt) })
                             .attr("cy", function(d) { return y(d.up) })
                             .attr("r", 2)
@@ -120,51 +167,27 @@
                             .enter()
                             .append("circle")
                             .filter(function (d) {return d.dn != 0})
-                            .attr("class", "dn")
+                            .attr("class", "dn vary")
                             .attr("cx", function(d) { return x(d.dnt) })
                             .attr("cy", function(d) { return y(d.dn) })
                             .attr("r", 2)
                             .append("svg:title")
                                .text(function(d) { return d.ip; })
 
-                        svg.append("g")
-                            .attr("class", "x axis")
-                            .attr("transform", "translate("+axis_w+","+ String(headroom+h) +")")
-                            .call(xAxis)
-
-                        svg.append("g")
-                            .attr("class", "y axis")
-                            .attr("transform", "translate("+axis_w+","+ headroom +")")
-                            .call(yAxis)
-
-                        svg.append("text")
-                            .attr("transform", "translate("+String(axis_w + (w/2))+",10)")
-                            .attr("class", "label")
-                            .attr("text-anchor", "middle")
-                            .append("tspan")
-                                .text("Maximum bandwidth vs. time, for ")
-                            .append("tspan")
-                                .attr("class", "up")
-                                .style("opacity", 1)
-                                .text("uploads")
-                            .append("tspan")
-                                .style("fill", "black")
-                                .text(" and ")
-                            .append("tspan")
-                                .attr("class", "dn")
-                                .style("opacity", 1)
-                                .text("downloads")
-                            .append("tspan")
-                                .style("fill", "black")
-                                .text(", per host (connected by ")
-                            .append("tspan")
-                                .style("font-weight", "bold")
-                                .text("line")
-                            .append("tspan")
-                                .style("font-weight", "normal")
-                                .text(", IP on hover)")
+                        if (!axes_done){
+                            axes_done = true;
+                            svg.append("g")
+                                .attr("class", "x axis")
+                                .attr("transform", "translate("+axis_w+","+ String(headroom+h) +")")
+                                .call(xAxis);
+                            svg.append("g")
+                                .attr("class", "y axis")
+                                .attr("transform", "translate("+axis_w+","+ headroom +")")
+                                .call(yAxis);
+                        }
 
                     });
+                }
 
 		</script>
 	</body>
