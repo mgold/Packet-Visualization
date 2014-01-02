@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Benchmark Performance</title>
+		<script type="text/javascript" src="d3.v3.min.js"></script>
+		<style type="text/css">
+            .axis path,
+            .axis line {
+                    fill: none;
+                    stroke: grey;
+                    shape-rendering: crispEdges;
+            }
+
+            .connect {
+                    fill: none;
+                    stroke: black;
+                    opacity: 0.4;
+            }
+
+            .up {
+                fill: red;
+                opacity: 0.5;
+            }
+
+            .dn {
+                fill: blue;
+                opacity: 0.5;
+            }
+
+            .label {
+                    font-family: sans-serif;
+                    font-size: 12px;
+            }
+            .axis text {
+                    font-family: sans-serif;
+                    font-size: 10px;
+            }
+
+            .xaxis text {
+                    font-weight: bold;
+                    font-size: 11px;
+            }
+
+		</style>
+	</head>
+	<body>
+		<script type="text/javascript">
+
+            var datafile = "data/bandwidth.0-199.csv";
+
+			var w = 1300;
+			var h = 600;
+            var axis_w = 45;
+            var headroom = 15;
+            var footroom = 20;
+            var rightroom = 20;
+
+            var x = d3.time.scale()
+                .range([0, w])
+            var y = d3.scale.log()
+                .range([h, 0])
+
+            var xAxis = d3.svg.axis()
+                 .scale(x)
+                 .tickFormat(d3.time.format("%H:%M"));
+
+            var yAxis = d3.svg.axis()
+                 .scale(y)
+                 .orient("left")
+                 .tickFormat(function (d) { if (d.toString().match(/^\d/)[0] == "1")
+                                                 return d3.format("s")(d)+"B/s"
+                                            return "";
+                                        })
+
+			var svg = d3.select("body")
+						.append("svg")
+						.attr("width", axis_w+w+rightroom)
+						.attr("height", headroom+h+footroom);
+            var plot = svg.append("g")
+                        .attr("transform", "translate("+axis_w+","+headroom+")")
+
+            d3.csv(datafile)
+                .row(function(d) { return {ip: d.ip, up: +d.up, upt: new Date(1000* +d.upt), dn: +d.dn, dnt: new Date(1000* +d.dnt)} })
+                .get(function(error, rows) {
+                        var minDate = new Date("Jan 1 1970")
+                        x.domain([d3.min(rows, function(d){ if (d.upt < minDate){
+                                                                return d.dnt < minDate ? undefined : d.dnt
+                                                            }else{
+                                                                return d.dnt < minDate ? d.upt : Math.min(d.upt, d.dnt)
+                                                            }})
+                                 ,d3.max(rows, function(d){ return Math.max(d.upt, d.dnt) })])
+                        y.domain([10, d3.max(rows, function(d){ return Math.max(d.up, d.dn) })])
+
+                        plot.selectAll(".connect")
+                            .data(rows)
+                            .enter()
+                            .append("line")
+                            .filter(function (d) {return d.up != 0 && d.dn != 0;})
+                            .attr("class", "connect")
+                            .attr("x1", function(d) { return x(d.upt) })
+                            .attr("x2", function(d) { return x(d.dnt) })
+                            .attr("y1", function(d) { return y(d.up) })
+                            .attr("y2", function(d) { return y(d.dn) })
+
+                        plot.selectAll(".up")
+                            .data(rows)
+                            .enter()
+                            .append("circle")
+                            .filter(function (d) {return d.up != 0})
+                            .attr("class", "up")
+                            .attr("cx", function(d) { return x(d.upt) })
+                            .attr("cy", function(d) { return y(d.up) })
+                            .attr("r", 2)
+                            .append("svg:title")
+                               .text(function(d) { return d.ip; })
+
+                        plot.selectAll(".dn")
+                            .data(rows)
+                            .enter()
+                            .append("circle")
+                            .filter(function (d) {return d.dn != 0})
+                            .attr("class", "dn")
+                            .attr("cx", function(d) { return x(d.dnt) })
+                            .attr("cy", function(d) { return y(d.dn) })
+                            .attr("r", 2)
+                            .append("svg:title")
+                               .text(function(d) { return d.ip; })
+
+                        svg.append("g")
+                            .attr("class", "x axis")
+                            .attr("transform", "translate("+axis_w+","+ String(headroom+h) +")")
+                            .call(xAxis)
+
+                        svg.append("g")
+                            .attr("class", "y axis")
+                            .attr("transform", "translate("+axis_w+","+ headroom +")")
+                            .call(yAxis)
+
+                        svg.append("text")
+                            .attr("transform", "translate("+String(axis_w + (w/2))+",10)")
+                            .attr("class", "label")
+                            .attr("text-anchor", "middle")
+                            .append("tspan")
+                                .text("Maximum bandwidth vs. time, for ")
+                            .append("tspan")
+                                .attr("class", "up")
+                                .style("opacity", 1)
+                                .text("uploads")
+                            .append("tspan")
+                                .style("fill", "black")
+                                .text(" and ")
+                            .append("tspan")
+                                .attr("class", "dn")
+                                .style("opacity", 1)
+                                .text("downloads")
+                            .append("tspan")
+                                .style("fill", "black")
+                                .text(", per host (connected by ")
+                            .append("tspan")
+                                .style("font-weight", "bold")
+                                .text("line")
+                            .append("tspan")
+                                .style("font-weight", "normal")
+                                .text(", IP on hover)")
+
+                    });
+
+		</script>
+	</body>
+</html>
