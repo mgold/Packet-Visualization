@@ -42,18 +42,24 @@
                     font-size: 11px;
             }
 
+            #subnet_controls {
+                font-family: sans-serif;
+                margin-left: 45px;
+            }
+
 		</style>
 	</head>
 	<body>
         <svg></svg>
         <div id="subnet_controls">
-          <input name="mode" type="radio" value="s16" id="subnet_16"><label for="subnet_16"> /16</label>
-          <input name="mode" type="radio" value="s24" id="subnet_24"><label for="subnet_24"> /24</label>
-          <input name="mode" type="radio" value="s32" id="subnet_32" checked><label for="subnet_32"> /32</label>
+          Group IPs by subnet mask:
+          <input name="mode" type="radio" value="16" id="subnet_16"><label for="subnet_16"> /16</label>
+          <input name="mode" type="radio" value="24" id="subnet_24"><label for="subnet_24"> /24</label>
+          <input name="mode" type="radio" value="32" id="subnet_32" checked><label for="subnet_32"> /32</label>
         </div>
 		<script type="text/javascript">
 
-            var datafile = "data/bandwidth.0-199.";
+            var datafile = "data/bandwidth.0-199.s";
 
 			var w = 1300;
 			var h = 600;
@@ -115,79 +121,79 @@
             var axes_done = false;
 
             d3.selectAll("#subnet_controls input[name=mode]").on("change", function() {
-                reeval(datafile+this.value+".csv");
+                reeval(this.value);
             })
 
-            reeval(datafile+"s32.csv"); //on startup
-            function reeval(file_name){
-            d3.csv(file_name)
-                .row(function(d) { return { ip: d.ip
-                                          , up: +d.up
-                                          , upt: new Date(1000* +d.upt)
-                                          , dn: +d.dn
-                                          , dnt: new Date(1000* +d.dnt)
-                                          } })
-                .get(function(error, rows) {
-                        var minDate = new Date("Jan 1 1970")
-                        x.domain([d3.min(rows, function(d){ if (d.upt < minDate){
-                                                                return d.dnt < minDate ? undefined : d.dnt
-                                                            }else{
-                                                                return d.dnt < minDate ? d.upt : Math.min(d.upt, d.dnt)
-                                                            }})
-                                 ,d3.max(rows, function(d){ return Math.max(d.upt, d.dnt) })])
-                        y.domain([10, d3.max(rows, function(d){ return Math.max(d.up, d.dn) })])
+            reeval("32"); //on startup
+            function reeval(mask){
+                d3.csv(datafile+mask+".csv")
+                    .row(function(d) { return { ip: d.ip
+                                              , up: +d.up
+                                              , upt: new Date(1000* +d.upt)
+                                              , dn: +d.dn
+                                              , dnt: new Date(1000* +d.dnt)
+                                              } })
+                    .get(function(error, rows) {
+                            var minDate = new Date("Jan 1 1970")
+                            x.domain([d3.min(rows, function(d){ if (d.upt < minDate){
+                                                                    return d.dnt < minDate ? undefined : d.dnt
+                                                                }else{
+                                                                    return d.dnt < minDate ? d.upt : Math.min(d.upt, d.dnt)
+                                                                }})
+                                     ,d3.max(rows, function(d){ return Math.max(d.upt, d.dnt) })])
+                            y.domain([10, d3.max(rows, function(d){ return Math.max(d.up, d.dn) })])
 
-                        plot.selectAll(".vary").remove();
+                            plot.selectAll(".vary").remove();
 
-                        plot.selectAll(".connect")
-                            .data(rows)
-                            .enter()
-                            .append("line")
-                            .filter(function (d) {return d.up != 0 && d.dn != 0;})
-                            .attr("class", "connect vary")
-                            .attr("x1", function(d) { return x(d.upt) })
-                            .attr("x2", function(d) { return x(d.dnt) })
-                            .attr("y1", function(d) { return y(d.up) })
-                            .attr("y2", function(d) { return y(d.dn) })
+                            plot.selectAll(".connect")
+                                .data(rows)
+                                .enter()
+                                .append("line")
+                                .filter(function (d) {return d.up != 0 && d.dn != 0;})
+                                .attr("class", "connect vary")
+                                .attr("x1", function(d) { return x(d.upt) })
+                                .attr("x2", function(d) { return x(d.dnt) })
+                                .attr("y1", function(d) { return y(d.up) })
+                                .attr("y2", function(d) { return y(d.dn) })
 
-                        plot.selectAll(".up")
-                            .data(rows)
-                            .enter()
-                            .append("circle")
-                            .filter(function (d) {return d.up != 0})
-                            .attr("class", "up vary")
-                            .attr("cx", function(d) { return x(d.upt) })
-                            .attr("cy", function(d) { return y(d.up) })
-                            .attr("r", 2)
-                            .append("svg:title")
-                               .text(function(d) { return d.ip; })
+                            plot.selectAll(".up")
+                                .data(rows)
+                                .enter()
+                                .append("circle")
+                                .filter(function (d) {return d.up != 0})
+                                .attr("class", "up vary")
+                                .attr("cx", function(d) { return x(d.upt) })
+                                .attr("cy", function(d) { return y(d.up) })
+                                .attr("r", 2)
+                                .append("svg:title")
+                                .text(function(d) { return mask == "32" ? d.ip : d.ip+"/"+mask; })
 
-                        plot.selectAll(".dn")
-                            .data(rows)
-                            .enter()
-                            .append("circle")
-                            .filter(function (d) {return d.dn != 0})
-                            .attr("class", "dn vary")
-                            .attr("cx", function(d) { return x(d.dnt) })
-                            .attr("cy", function(d) { return y(d.dn) })
-                            .attr("r", 2)
-                            .append("svg:title")
-                               .text(function(d) { return d.ip; })
+                            plot.selectAll(".dn")
+                                .data(rows)
+                                .enter()
+                                .append("circle")
+                                .filter(function (d) {return d.dn != 0})
+                                .attr("class", "dn vary")
+                                .attr("cx", function(d) { return x(d.dnt) })
+                                .attr("cy", function(d) { return y(d.dn) })
+                                .attr("r", 2)
+                                .append("svg:title")
+                                .text(function(d) { return mask == "32" ? d.ip : d.ip+"/"+mask; })
 
-                        if (!axes_done){
-                            axes_done = true;
-                            svg.append("g")
-                                .attr("class", "x axis")
-                                .attr("transform", "translate("+axis_w+","+ String(headroom+h) +")")
-                                .call(xAxis);
-                            svg.append("g")
-                                .attr("class", "y axis")
-                                .attr("transform", "translate("+axis_w+","+ headroom +")")
-                                .call(yAxis);
-                        }
+                            if (!axes_done){
+                                axes_done = true;
+                                svg.append("g")
+                                    .attr("class", "x axis")
+                                    .attr("transform", "translate("+axis_w+","+ String(headroom+h) +")")
+                                    .call(xAxis);
+                                svg.append("g")
+                                    .attr("class", "y axis")
+                                    .attr("transform", "translate("+axis_w+","+ headroom +")")
+                                    .call(yAxis);
+                            }
 
-                    });
-                }
+                        });
+                    }
 
 		</script>
 	</body>
