@@ -40,14 +40,14 @@ body {
 <script src="lookup.js"></script>
 <script>
 
-var heatmap_width = 841,
+var heatmap_width = 1005,
     marginL = 50;
 
 var x = d3.time.scale()
-     .range([String(marginL), String(heatmap_width + marginL)])
+     .range([marginL, heatmap_width + marginL])
 
 var xA = d3.time.scale()
-     .range([String(marginL), String(heatmap_width + marginL)])
+     .range([marginL, heatmap_width + marginL])
 
 var xAxis = d3.svg.axis()
      .scale(xA)
@@ -74,14 +74,14 @@ var svg = d3.select("body").append("svg")
     .attr("height", "1080")
 
 svg.append("svg:image")
-    .attr("xlink:href", "data/up.0-199.png")
+    .attr("xlink:href", "data/up.0-239.png")
     .attr("width", String(heatmap_width))
     .attr("height", "500")
     .attr("x", String(marginL))
     .attr("y", "0")
 
 svg.append("svg:image")
-    .attr("xlink:href", "data/dn.0-199.png")
+    .attr("xlink:href", "data/dn.0-239.png")
     .attr("width", String(heatmap_width))
     .attr("height", "500")
     .attr("x", String(marginL))
@@ -129,7 +129,7 @@ svg.append("text")
     .text("Packet Size (bytes)")
 
     var grid = svg.append("g")
-    .attr("transform", "translate(1100,500)")
+    .attr("transform", "translate(1200,500)")
 
 /////// Map
 
@@ -142,7 +142,7 @@ var path = d3.geo.path()
     .projection(projection);
 
 var map = svg.append("g")
-    .attr("transform", "translate(1000,0)")
+    .attr("transform", "translate("+(marginL+heatmap_width+8)+",0)")
 
 map.append("rect")
     //.attr("x", 580)
@@ -170,29 +170,30 @@ var brush = d3.svg.brush()
 var color_cutoffs = ["0", "1", "2", "≤6", "≤18", "≤131", ">131"].reverse(),
     colors = ["#000000", "#000045", "#0000AD", "#009C00", "#ADD900", "#D98600", "#E80000"].reverse()
 
-var scale_top = 10;
+var legend = svg.append("g")
+                .attr("transform", "translate("+(marginL+heatmap_width+20)+",560)")
 
-svg.append("text")
+legend.append("text")
     .attr("transform", "rotate(-90)")
-    .attr("x", "-140")
-    .attr("y", String(heatmap_width + marginL + 15))
+    .attr("x", "-130")
+    .attr("y", "-8")
     .text("Packets per time & size")
 
 for (var i = color_cutoffs.length; i--;){
-    svg.append("rect")
+    legend.append("rect")
         .attr("width", "20")
         .attr("height", "14")
-        .attr("x", String(heatmap_width + marginL + 20))
-        .attr("y", String(i*20 + scale_top))
+        .attr("x", "0")
+        .attr("y", String(i*20))
         .attr("fill", colors[i]);
 
-    svg.append("text")
+    legend.append("text")
         .text(color_cutoffs[i])
-        .attr("x", String(heatmap_width + marginL + 45))
-        .attr("y", String(i*20 + scale_top + 11))
+        .attr("x", "30")
+        .attr("y", String(i*20 + 11))
 }
 
-d3.json("data/data.0-199.json", function(error, data){
+d3.json("data/data.0-239.json", function(error, data){
     d3.select("#loading").remove()
 
     var start_time = new Date(1000*data.start_time)
@@ -206,16 +207,18 @@ d3.json("data/data.0-199.json", function(error, data){
             svg.select(".brush").selectAll("rect")
                 .attr("height", "1060")
                 .attr("y", "0")
+                .select(".background")
+                .each(function(d){console.log(d)})
             })
         .on("brushend", reeval)
     );
 
-    reeval(); // on program start
+    reeval(); // on data load
 
     function reeval(){
         var extent = brush.extent()
         var t0 = extent[0][0]
-        var t1  = extent[1][0]
+        var t1 = extent[1][0]
         var pix = (t1 - t0)
         var i0 = (t0 - start_time) / 1000
         var i1 = (t1 - start_time) / 1000
