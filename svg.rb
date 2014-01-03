@@ -94,6 +94,7 @@ def mk_svg filename, cols, colors, cutoffs
         file.puts '<?xml version="1.0" standalone="no"?>'
         file.puts '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'
         file.puts '<svg viewBox = "0 0 '+width.to_s+' '+height.to_s+'" version = "1.1">'
+        file.puts '<rect x="0" y="0" width="'+width.to_s+'" height="'+height.to_s+'" fill="#'+colors[0]+'"/>'
 
         cols.each_with_index do |col, i|
             col.each_with_index do |v, j|
@@ -107,7 +108,9 @@ def mk_svg filename, cols, colors, cutoffs
                 if color == ""
                     color = colors.last
                 end
-                file.puts '<rect x="'+i.to_s+'" y="'+j.to_s+'" width="1" height="1" fill="#'+color+'"/>'
+                if color != colors[0]
+                    file.puts '<rect x="'+i.to_s+'" y="'+j.to_s+'" width="1" height="1" fill="#'+color+'"/>'
+                end
             end
         end
 
