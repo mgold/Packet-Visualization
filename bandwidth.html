@@ -5,6 +5,10 @@
 		<title>Bandwidth vs. Time Per Host</title>
 		<script type="text/javascript" src="d3.v3.min.js"></script>
 		<style type="text/css">
+            body {
+                margin: 0;
+            }
+
             .axis path,
             .axis line {
                     fill: none;
@@ -15,17 +19,35 @@
             .connect {
                     fill: none;
                     stroke: black;
-                    opacity: 0.4;
+                    opacity: 0.3;
+            }
+
+            text .up,
+            #plot .up {
+                fill: red;
+                opacity: 0.5;
+                stroke: none;
+            }
+
+            text .dn,
+            #plot .dn {
+                fill: blue;
+                opacity: 0.5;
+                stroke: none;
             }
 
             .up {
-                fill: red;
-                opacity: 0.5;
+                stroke: red;
+                stroke-opacity: 0.5;
+                stroke-width: 1;
+                fill: none;
             }
 
             .dn {
-                fill: blue;
-                opacity: 0.5;
+                stroke: blue;
+                stroke-opacity: 0.5;
+                stroke-width: 1;
+                fill: none;
             }
 
             .label {
@@ -59,12 +81,13 @@
         </div>
 		<script type="text/javascript">
 
-            var datafile = "data/bandwidth.0-239.s";
+            var datafile = "data/bandwidth.0-239.s",
+                binnedfile = "data/binband.0-239.s"
 
 			var w = 1300;
 			var h = 600;
-            var axis_w = 45;
-            var headroom = 15;
+            var leftroom = 45;
+            var headroom = 20;
             var footroom = 20;
             var rightroom = 20;
 
@@ -86,13 +109,14 @@
                                         })
 
 			var svg = d3.select("svg")
-						.attr("width", axis_w+w+rightroom)
+						.attr("width", leftroom+w+rightroom)
 						.attr("height", headroom+h+footroom);
             var plot = svg.append("g")
-                        .attr("transform", "translate("+axis_w+","+headroom+")")
+                        .attr("transform", "translate("+leftroom+","+headroom+")")
+                        .attr("id", "plot")
 
             svg.append("text")
-                .attr("transform", "translate("+String(axis_w + (w/2))+",10)")
+                .attr("transform", "translate("+String(leftroom + (w/2))+",15)")
                 .attr("class", "label")
                 .attr("text-anchor", "middle")
                 .append("tspan")
@@ -103,6 +127,7 @@
                     .text("uploads")
                 .append("tspan")
                     .style("fill", "black")
+                    .style("stroke", "none")
                     .text(" and ")
                 .append("tspan")
                     .attr("class", "dn")
@@ -110,6 +135,7 @@
                     .text("downloads")
                 .append("tspan")
                     .style("fill", "black")
+                    .style("stroke", "none")
                     .text(", per foreign host (connected by ")
                 .append("tspan")
                     .style("font-weight", "bold")
@@ -143,7 +169,7 @@
                                      ,d3.max(rows, function(d){ return Math.max(d.upt, d.dnt) })])
                             y.domain([10, d3.max(rows, function(d){ return Math.max(d.up, d.dn) })])
 
-                            plot.selectAll(".vary").remove();
+                            svg.selectAll(".vary").remove();
 
                             plot.selectAll(".connect")
                                 .data(rows)
@@ -184,13 +210,34 @@
                                 axes_done = true;
                                 svg.append("g")
                                     .attr("class", "x axis")
-                                    .attr("transform", "translate("+axis_w+","+ String(headroom+h) +")")
+                                    .attr("transform", "translate("+leftroom+","+ String(headroom+h) +")")
                                     .call(xAxis);
                                 svg.append("g")
                                     .attr("class", "y axis")
-                                    .attr("transform", "translate("+axis_w+","+ headroom +")")
+                                    .attr("transform", "translate("+leftroom+","+ headroom +")")
                                     .call(yAxis);
                             }
+
+                            d3.json(binnedfile+mask+".json", function(error, data){
+                                var xBin = d3.scale.log()
+                                            .domain([1, data.max])
+                                            .range([leftroom, 1]);
+
+                                var offset = (y(10) - y(100))*data.rez*0.5; // half the width of a sample
+                                var line = d3.svg.line()
+                                    .x(function(d) {return xBin(d[1])})
+                                    .y(function(d) {return y(d[0]) + headroom + offset})
+                                    //.interpolate("cardinal")
+
+                                svg.append("path")
+                                   .attr("class", "up vary")
+                                   .attr("d", line(data.up));
+
+                                svg.append("path")
+                                   .attr("class", "dn vary")
+                                   .attr("d", line(data.dn));
+
+                            });
 
                         });
                     }
