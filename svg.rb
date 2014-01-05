@@ -2,6 +2,7 @@ require 'csv'
 require 'date'
 require 'geoip'
 require 'json'
+require 'set'
 
 binSize = 3
 max_dl = 1500
@@ -26,11 +27,12 @@ up_cols = []
 up_col = [0] * height
 dn_cols = []
 dn_col = [0] * height
-data = []
+packets = []
 up_h = Hash.new
 up_h.default = 0
 dn_h = Hash.new
 dn_h.default = 0
+ips = Set.new
 
 CSV.foreach(ppFile) do |ut,cap,ip,dir,cnt|
     ts = Time.at(ut.to_i)
@@ -47,20 +49,15 @@ CSV.foreach(ppFile) do |ut,cap,ip,dir,cnt|
             keys.each do |ip|
                 dnl = dn_h[ip]
                 upl = up_h[ip]
-                loc = geo.city ip
-                lat = lon = "x"
-                if loc
-                    lat = loc.latitude.round(4).to_s
-                    lon = loc.longitude.round(4).to_s
-                end
-                entries[ip] = {lt: lat, ln: lon, d: dnl, u: upl}
+                entries[ip] = {d: dnl, u: upl}
             end
-            data << entries
+            packets << entries
             up_h.clear
             dn_h.clear
         end
     end
 
+    ips.add(ip)
     if dir == "dn"
         dn_col[(cnt.to_i - 1) / scale_fac] += 1
         dn_h[ip] += cnt.to_i
@@ -81,6 +78,14 @@ cutoffs = [0, 1, 2, p50, p80, p95]
 cutoffs_legend = ["0", "1", "2", "≤"+p50.to_s, "≤"+p80.to_s, "≤"+p95.to_s,
                   ">"+p95.to_s]
 colors = ["000000", "000045", "0000AD", "009C00", "ADD900", "D98600", "E80000"]
+
+geoIPs = Hash.new
+ips.each{|ip| loc = geo.city ip
+              if loc
+                  geoIPs[ip] = [loc.longitude.round(4).to_s,
+                                loc.latitude.round(4).to_s]
+              end
+        }
 
 $stderr.puts
 
@@ -125,9 +130,10 @@ end
 syscall =  mk_svg up_file, up_cols, colors, cutoffs
 syscall << mk_svg(dn_file, dn_cols, colors, cutoffs)
 
-file = File.open(dat_file, mode="w"){ |file|
+File.open(dat_file, mode="w"){ |file|
     file.puts JSON.fast_generate({start_time: start_time, bin_size: binSize,
-    colors: colors.reverse, cutoffs: cutoffs_legend.reverse, data: data})
+    colors: colors.reverse, cutoffs: cutoffs_legend.reverse, packets: packets,
+    geoIPs:geoIPs})
 }
 
 #Do this after all other memory has been freed

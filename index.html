@@ -193,7 +193,7 @@ for (var i = color_cutoffs.length; i--;){
         .attr("y", String(i*20 + 11))
 }
 
-d3.json("data.0-239.json", function(error, data){
+d3.json("data/data.0-239.json", function(error, data){
     d3.select("#loading").remove()
 
     var start_time = new Date(1000*data.start_time)
@@ -220,14 +220,14 @@ d3.json("data.0-239.json", function(error, data){
         var pix = (t1 - t0)
         var i0 = (t0 - start_time) / 1000
         var i1 = (t1 - start_time) / 1000
-        var sel = data.data.slice(i0, i1)
+        var sel = data.packets.slice(i0, i1)
         var use_entire = sel.length == 0;
 
         if (use_entire) {
             map.selectAll(".point").remove();
             grid.selectAll(".square").remove();
             //TODO: Easy optimization: store the summed values
-            sel = data.data;
+            sel = data.packets;
         }
         var summed = [];
         for (var i = 0; i < sel.length; i++){
@@ -255,6 +255,7 @@ d3.json("data.0-239.json", function(error, data){
             maxUp = Math.max(maxUp, newbie["u"])
             maxDown = Math.max(maxDown, newbie["d"])
             ips[parseInt(ip.slice(0, ip.indexOf(".")))] += newbie["d"]
+            newbie["ip"] = ip;
             dataSet.push(newbie)
         }
         var maxToIp = Math.log(Math.max.apply(null, ips))
@@ -268,11 +269,12 @@ d3.json("data.0-239.json", function(error, data){
             .attr("class", "point")
             .attr("d", d3.svg.symbol().type("circle").size(8))
             .attr("transform", function(d) {
-                if (d.ln == "x"){
-                    return "translate(0, -100)"
+                var loc = data.geoIPs[d.ip]
+                if (loc){
+                    var proj = projection(loc)
+                    return "translate(" + String(proj[0]+1) +"," + String(proj[1]-2.5) + ")"
                 } else {
-                    var loc = projection([d.ln, d.lt])
-                    return "translate(" + String(loc[0]+1) +"," + String(loc[1]-2.5) + ")"
+                    return "translate(0, -100)"
                 }})
             .style("fill", "white")
             .style("opacity", function(d){
