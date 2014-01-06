@@ -4,7 +4,7 @@ Max Goldstein
 This is a set of visualizations of network packets captured at DEF CON 2013.
 The original data was 15GB of raw pcap files representing nearly 10 million
 packets. Read the **[essay](http://www.eecs.tufts.edu/~mgolds07/packet_viz/)**
-which explains and links to live demos
+which explains and links to live demos.
 
 For the first visualization, *multiview*, compression and binning
 techniques reduce this information three-thousandfold, to 4.9MB of JSON and two
