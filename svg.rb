@@ -16,6 +16,14 @@ rescue
     abort "Must supply preprocessed file on command line."
 end
 
+isolateFile = ARGV[1]
+if isolateFile
+    isolated = File.readlines(isolateFile).each{|s| s.chomp!}
+else
+    isolated = nil
+end
+
+
 up_file = "up."+pcapRange+".svg"
 dn_file = "dn."+pcapRange+".svg"
 dat_file = "data."+pcapRange+".json"
@@ -56,6 +64,8 @@ CSV.foreach(ppFile) do |ut,cap,ip,dir,cnt|
             dn_h.clear
         end
     end
+
+    if isolated and not isolated.include?(ip) then next end
 
     ips.add(ip)
     if dir == "dn"
