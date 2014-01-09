@@ -11,7 +11,7 @@ rescue
     abort "Must supply bandwidth file on command line."
 end
 
-dat_file = "binband."+pcapRange+"."+bitmask+".json"
+dat_file = "bandwidth_density."+pcapRange+"."+bitmask+".json"
 
 up_h = Hash.new
 up_h.default = 0
@@ -23,7 +23,6 @@ def bin bw
     while(bw > 10**key)
         key += RESOLUTION
     end
-    #return '%.2f' % 10**key
     return (10**key).round(2)
 end
 

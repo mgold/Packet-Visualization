@@ -82,7 +82,7 @@
 		<script type="text/javascript">
 
             var datafile = "data/bandwidth.0-239.s",
-                binnedfile = "data/binband.0-239.s"
+                densityfile = "data/bandwidth_density.0-239.s"
 
 			var w = 1300;
 			var h = 600;
@@ -218,14 +218,14 @@
                                     .call(yAxis);
                             }
 
-                            d3.json(binnedfile+mask+".json", function(error, data){
-                                var xBin = d3.scale.log()
+                            d3.json(densityfile+mask+".json", function(error, data){
+                                var xDen = d3.scale.log()
                                             .domain([1, data.max])
                                             .range([leftroom, 1]);
 
                                 var offset = (y(10) - y(100))*data.rez*0.5; // half the width of a sample
                                 var line = d3.svg.line()
-                                    .x(function(d) {return xBin(d[1])})
+                                    .x(function(d) {return xDen(d[1])})
                                     .y(function(d) {return y(d[0]) + headroom + offset})
                                     //.interpolate("cardinal")
 
