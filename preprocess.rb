@@ -27,6 +27,26 @@ return addr != "0.0.0.0" &&
        !addr.match(/^192\.168.*/)
 end
 
+def dport(pkt)
+    if pkt.is_tcp?
+        pkt.tcp_dport
+    elsif pkt.is_udp?
+        pkt.udp_dport
+    else
+        ''
+    end
+end
+
+def sport(pkt)
+    if pkt.is_tcp?
+        pkt.tcp_sport
+    elsif pkt.is_udp?
+        pkt.udp_sport
+    else
+        ''
+    end
+end
+
 def processPcap(pcapFile, capNum)
     dltotal = 0
     $logger.info('Reading pcap file '+capNum.to_s+', filename '+pcapFile+'.')
@@ -40,10 +60,27 @@ def processPcap(pcapFile, capNum)
             is_dn = okIP(packet.ip_saddr)
             is_up = okIP(packet.ip_daddr)
             if is_dn ^ is_up
-                ip = is_dn ? packet.ip_saddr : packet.ip_daddr
-                type = is_dn ? "dn" : "up"
+                if is_up
+                    ip_loc = packet.ip_saddr
+                    ip_for = packet.ip_daddr
+                    pt_loc = sport packet
+                    pt_for = dport packet
+                    dir = :up
+                else
+                    ip_loc = packet.ip_daddr
+                    ip_for = packet.ip_saddr
+                    pt_loc = dport packet
+                    pt_for = sport packet
+                    dir = :dn
+                end
+                prot = packet.proto[-1]
+                if pt_for == 80 and prot == "TCP"
+                    http = packet.payload[/^(GET|HEAD|POST|PUT|DELETE|TRACE|OPTIONS|CONNECT|PATCH)/] ||
+                           packet.payload[/^HTTP\S* [0-9]{3}/].to_s[-3..-1]
+                    if http then prot = "HTTP " + http end
+                end
                 len = packet.ip_calc_len.to_s
-                $outf.puts [ts,capNum,ip,type,len].join(",")
+                $outf.puts [ts,capNum,dir,ip_loc,pt_loc,ip_for,pt_for,prot,len].join(",")
             end
         end
     }
