@@ -84,7 +84,6 @@ CSV.foreach(ppFile) do |ut,cap,ip,dir,cnt|
         dn_h.clear
     end
 
-    # use only the first two octets
     key = ip[key_regex]
     if dir == "up"
         up_h[key] += cnt.to_i
