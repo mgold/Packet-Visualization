@@ -53,8 +53,6 @@ def processPcap(pcapFile, capNum)
     packets = PacketFu::PcapPackets.new.read(File.open(pcapFile) {|f| f.read})
     $logger.info('Done reading pcap file, starting analysis.')
     packets.each { |p|
-        ut = p.timestamp
-        ts = ut.sec.to_i.to_s + "." + ut.usec.to_i.to_s
         packet = PacketFu::Packet.parse(p.data)
         if packet.is_ip?
             is_dn = okIP(packet.ip_saddr)
@@ -73,6 +71,7 @@ def processPcap(pcapFile, capNum)
                     pt_for = sport packet
                     dir = :dn
                 end
+                ts = p.timestamp.sec.to_f + p.timestamp.usec.to_f / 1000000.0
                 prot = packet.proto[-1]
                 if pt_for == 80 and prot == "TCP"
                     http = packet.payload[/^(GET|HEAD|POST|PUT|DELETE|TRACE|OPTIONS|CONNECT|PATCH)/] ||

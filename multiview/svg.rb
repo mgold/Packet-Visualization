@@ -4,7 +4,7 @@ require 'geoip'
 require 'json'
 require 'set'
 
-binSize = 3
+bin_size = 3
 max_dl = 1500
 scale_fac = 3
 height = max_dl / scale_fac
@@ -28,7 +28,8 @@ up_file = "up."+pcapRange+".svg"
 dn_file = "dn."+pcapRange+".svg"
 dat_file = "data."+pcapRange+".json"
 
-start_time = File.open(ppFile, &:readline)[/^[0-9]*/]
+start_time = File.open(ppFile, &:readline)[/^[0-9]*\.[0-9]*/].to_f
+counter = start_time
 geo = GeoIP.new('GeoLiteCity.dat')
 last_break = -1
 up_cols = []
@@ -42,11 +43,11 @@ dn_h = Hash.new
 dn_h.default = 0
 ips = Set.new
 
-CSV.foreach(ppFile) do |ut,cap,ip,dir,cnt|
-    ts = Time.at(ut.to_i)
+CSV.foreach(ppFile) do |ts,cap,dir,ip_loc,pt_loc,ip_for,pt_for,proto,len|
+    ts = ts.to_f
 
-    if ts.sec % binSize == 0 && last_break != ts.sec
-        last_break = ts.sec
+    if ts > counter + bin_size
+        counter += bin_size
         up_cols << up_col.reverse!
         dn_cols << dn_col.reverse!
         up_col = [0] * height
@@ -65,15 +66,15 @@ CSV.foreach(ppFile) do |ut,cap,ip,dir,cnt|
         end
     end
 
-    if isolated and not isolated.include?(ip) then next end
+    if isolated and not isolated.include?(ip_for) then next end
 
-    ips.add(ip)
+    ips.add(ip_for)
     if dir == "dn"
-        dn_col[(cnt.to_i - 1) / scale_fac] += 1
-        dn_h[ip] += cnt.to_i
+        dn_col[(len.to_i - 1) / scale_fac] += 1
+        dn_h[ip_for] += len.to_i
     else
-        up_col[(cnt.to_i - 1) / scale_fac] += 1
-        up_h[ip] += cnt.to_i
+        up_col[(len.to_i - 1) / scale_fac] += 1
+        up_h[ip_for] += len.to_i
     end
 end
 
@@ -133,6 +134,7 @@ def mk_svg filename, cols, colors, cutoffs
     }
 
     # Not exactly portable ...
+    # Also try rsvg and ImageMagick convert
     return "/Applications/Inkscape.app/Contents/Resources/bin/inkscape --export-png "+filename.gsub("svg", "png")+" "+filename+";"
 
 end
@@ -141,7 +143,7 @@ syscall =  mk_svg up_file, up_cols, colors, cutoffs
 syscall << mk_svg(dn_file, dn_cols, colors, cutoffs)
 
 File.open(dat_file, mode="w"){ |file|
-    file.puts JSON.fast_generate({start_time: start_time, bin_size: binSize,
+    file.puts JSON.fast_generate({start_time: start_time, bin_size: bin_size,
     colors: colors.reverse, cutoffs: cutoffs_legend.reverse, packets: packets,
     geoIPs:geoIPs})
 }

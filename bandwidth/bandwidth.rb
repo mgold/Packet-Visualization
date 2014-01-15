@@ -2,7 +2,7 @@ require 'csv'
 require 'date'
 require 'json'
 
-binSize = 3
+bin_size = 3
 
 begin
     ppFile = ARGV[0]
@@ -60,8 +60,8 @@ class Bandwidth
 
 end
 
-start_time = File.open(ppFile, &:readline)[/^[0-9]*/]
-last_break = -1
+start_time = File.open(ppFile, &:readline)[/^[0-9]*\.[0-9]*/].to_f
+counter = start_time
 highest_bwidths = Hash.new
 highest_bwidths.default = Bandwidth.new(Timestamped.new(0,-1), Timestamped.new(0,-1))
 up_h = Hash.new
@@ -69,26 +69,26 @@ up_h.default = 0
 dn_h = Hash.new
 dn_h.default = 0
 
-CSV.foreach(ppFile) do |ut,cap,ip,dir,cnt|
-    ts = Time.at(ut.to_i)
+CSV.foreach(ppFile) do |ts,cap,dir,ip_loc,pt_loc,ip_for,pt_for,proto,len|
+    ts = ts.to_f
 
-    if ts.sec % binSize == 0 && last_break != ts.sec
-        last_break = ts.sec
+    if ts > counter + bin_size
+        counter += bin_size
         keys = (up_h.keys.concat(dn_h.keys)).uniq!
         keys.each {|key|
-            up = Timestamped.new(up_h[key]/binSize, ut)
-            dn = Timestamped.new(dn_h[key]/binSize, ut)
+            up = Timestamped.new(up_h[key]/bin_size, ts)
+            dn = Timestamped.new(dn_h[key]/bin_size, ts)
             highest_bwidths[key] = highest_bwidths[key].merge(up, dn)
         }
         up_h.clear
         dn_h.clear
     end
 
-    key = ip[key_regex]
+    key = ip_for[key_regex]
     if dir == "up"
-        up_h[key] += cnt.to_i
+        up_h[key] += len.to_i
     else
-        dn_h[key] += cnt.to_i
+        dn_h[key] += len.to_i
     end
 end
 
