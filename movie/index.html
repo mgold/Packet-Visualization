@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Bandwidth vs. Time Per Host</title>
+		<script type="text/javascript" src="d3.v3.min.js"></script>
+		<style type="text/css">
+            body {
+                margin: 0;
+            }
+
+            .axis path,
+            .axis line {
+                    fill: none;
+                    stroke: white;
+                    shape-rendering: crispEdges;
+            }
+
+            #bg {
+                fill: black;
+            }
+
+            text.vert1, text.vert2, text.vert3 {
+                font-family: sans-serif;
+                font-size: 12px;
+            }
+            line.vert1 {
+                stroke: #FFF;
+            }
+            text.vert1 {
+                fill: #FFF;
+            }
+            line.vert2 {
+                stroke: #BBB;
+            }
+            text.vert2 {
+                fill: #BBB;
+            }
+            line.vert3 {
+                stroke: #888;
+            }
+            text.vert3 {
+                fill: #888;
+            }
+
+            line.horiz {
+                stroke: #080808;
+            }
+
+            .label {
+                    font-family: sans-serif;
+                    font-size: 12px;
+            }
+            .axis text {
+                    fill: white;
+                    font-family: sans-serif;
+                    font-size: 10px;
+            }
+
+		</style>
+	</head>
+	<body>
+        <svg></svg>
+		<script type="text/javascript">
+
+            //hard-coded knowledge of the data - shh!
+            var t0 = 1375472882.54132, //earliest timestamp
+                num_loc_ips = 20;      //local IPs on y-axis
+
+            var datafile = "data/bandwidth.0-239.s"
+
+			var w = 1300;
+			var h = 800;
+            var leftroom = 30;
+            var headroom = 20;
+            var footroom = 20;
+            var rightroom = 30;
+
+            var x = d3.scale.linear()
+                .domain([0, (223 << 8) + 255])
+                .range([0, w])
+            var y = d3.scale.linear()
+                .domain([0, num_loc_ips-1])
+                .range([h, 0])
+
+			var svg = d3.select("svg")
+						.attr("width", leftroom+w+rightroom)
+						.attr("height", headroom+h+footroom);
+
+            svg.append("rect")
+                .attr("id", "bg")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("width",  w+leftroom+rightroom)
+                .attr("height", h+headroom+footroom)
+
+            var plot = svg.append("g")
+                        .attr("transform", "translate("+leftroom+","+headroom+")")
+                        .attr("id", "plot")
+
+            plot.selectAll(".horiz")
+                .data(d3.range(0, num_loc_ips))
+                .enter()
+                .append("line")
+                .attr("class", "horiz")
+                .attr("x1", 0)
+                .attr("x2", w)
+                .attr("y1", function(d){return y(d)})
+                .attr("y2", function(d){return y(d)})
+                .each(function(d){console.log(d)})
+
+
+            function vert(block, cls){
+                var x_pos = Math.round(x(block << 8));
+                plot.append("line")
+                    .attr("class", "vert"+cls)
+                    .attr("x1", x_pos)
+                    .attr("x2", x_pos)
+                    .attr("y1", 0)
+                    .attr("y2", h);
+                svg.append("text")
+                    .attr("class", "vert"+cls)
+                    .attr("text-anchor", "middle")
+                    .attr("transform", "translate("+(leftroom+x_pos)+","+(headroom+h+footroom-5)+")")
+                    .text(block+".0.0.0")
+            }
+
+            vert(128, 1);
+            vert(64, 2);
+            vert(192, 2);
+            vert(0, 3);
+            vert(32, 3);
+            vert(96, 3);
+            vert(160, 3);
+            vert(224, 3);
+
+            /*
+            d3.csv(datafile)
+                .row(function(d) { return { ip: d.ip
+                                          , up: +d.up
+                                          , upt: new Date(1000* +d.upt)
+                                          , dn: +d.dn
+                                          , dnt: new Date(1000* +d.dnt)
+                                          } })
+                .get(function(error, rows) {
+                        var minDate = new Date("Jan 1 1970")
+                        x.domain([d3.min(rows, function(d){ if (d.upt < minDate){
+                                                                return d.dnt < minDate ? undefined : d.dnt
+                                                            }else{
+                                                                return d.dnt < minDate ? d.upt : Math.min(d.upt, d.dnt)
+                                                            }})
+                                 ,d3.max(rows, function(d){ return Math.max(d.upt, d.dnt) })])
+                        y.domain([10, d3.max(rows, function(d){ return Math.max(d.up, d.dn) })])
+
+                        svg.selectAll(".vary").remove();
+
+                        plot.selectAll(".connect")
+                            .data(rows)
+                            .enter()
+                            .append("line")
+                            .attr("class", "connect vary")
+                            .filter(function (d) {return d.up != 0 && d.dn != 0;})
+                            .attr("x1", function(d) { return x(d.upt) })
+                            .attr("x2", function(d) { return x(d.dnt) })
+                            .attr("y1", function(d) { return y(d.up) })
+                            .attr("y2", function(d) { return y(d.dn) })
+
+                        plot.selectAll(".up")
+                            .data(rows)
+                            .enter()
+                            .append("circle")
+                            .attr("class", "up vary")
+                            .filter(function (d) {return d.up != 0})
+                            .attr("cx", function(d) { return x(d.upt) })
+                            .attr("cy", function(d) { return y(d.up) })
+                            .attr("r", 2)
+                            .append("svg:title")
+                            .text(function(d) { return mask == "32" ? d.ip : d.ip+"/"+mask; })
+
+                        plot.selectAll(".dn")
+                            .data(rows)
+                            .enter()
+                            .append("circle")
+                            .attr("class", "dn vary")
+                            .filter(function (d) {return d.dn != 0})
+                            .attr("cx", function(d) { return x(d.dnt) })
+                            .attr("cy", function(d) { return y(d.dn) })
+                            .attr("r", 2)
+                            .append("svg:title")
+                            .text(function(d) { return mask == "32" ? d.ip : d.ip+"/"+mask; })
+
+                    });
+                */
+
+		</script>
+	</body>
+</html>
