@@ -62,7 +62,7 @@
         <svg></svg>
 		<script type="text/javascript">
 
-            var datafile = "movieData.csv"
+            var datafile = "movieData.json"
 
 			var w = 1300;
 			var h = 800;
@@ -119,34 +119,42 @@
             }
         }
 
-    d3.json(datafile, function(error, data) {
-        y.domain([0, data.num_loc_ips-1]);
-        grid(data.num_loc_ips);
+        // http://lmws.net/flattening-an-array-in-javascript
+        var flatten = function(array) {
+          var result = [], self = arguments.callee;
+          array.forEach(function(item) {
+            Array.prototype.push.apply(
+              result,
+              Array.isArray(item) ? self(item) : [item]
+            );
+          });
+          return result;
+        };
 
-        var rows = data.rows,
-            num_rows = rows.length;
+    d3.json(datafile, function(error, rows) {
+        var num_loc_ips = rows[0].length
+        y.domain([0, num_loc_ips-1]);
+        grid(num_loc_ips);
+
+        var num_rows = rows.length;
 
         for (var i = 0; i < num_rows; i++){
                 (function(frame_num){
-                    var frame = (rows[frame_num]).map(function(loc,i){
+                    var frame = flatten((rows[frame_num]).map(function(loc,i){
                             return loc.map(function(fore){ fore.l = i; return fore; });
-                        });
-                    console.log(frame);
-                    foo; //stop so I can verify the above
+                        }));
                     setTimeout( function (){
                         plot.selectAll("circle").remove();
                         plot.selectAll("circle")
-                        append("circle")
-                            .attr("class", pkt.proto)
-                            .attr("cx", x(pkt.ip_for))
-                            .attr("cy", y(pkt.loc_id))
-                            .attr("r", +Math.sqrt(pkt.len / 7))
-                            .style("opacity", 1)
-                            .transition()
-                            .duration(3000)
-                            .style("opacity", 0)
-                            .remove()
-                    }, (frame_num * 1000));
+                            .data(frame)
+                            .enter()
+                            .append("circle")
+                            .attr("class", "HTTP")
+                            .attr("cx", function(d) {return x(d.f)})
+                            .attr("cy", function(d) {return y(d.l)})
+                            .attr("r", function(d) {return +Math.sqrt(d.s)/20})
+                            .style("opacity", 0.8)
+                    }, (frame_num * 100));
                     })(i);
             }
 

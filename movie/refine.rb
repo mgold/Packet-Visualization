@@ -10,7 +10,7 @@ if !sel_file
     abort "Must supply file of ips and selected data on command line."
 end
 
-dat_file = "movieData.csv"
+dat_file = "movieData.json"
 
 ips = File.new(ip_file).to_a.map{|line| line.chomp!}
 
@@ -19,7 +19,7 @@ start_time = File.open(sel_file, &:readline)[/^[0-9]*\.[0-9]*/].to_f
 counter = start_time
 end_time = start_time
 rows = []
-instant = ([nil]*ips.length).map!{|x| h = {}; h.default = 0; h}
+instant = ([nil]*ips.length).map!{|x| Hash.new(0)}
 
 CSV.foreach(sel_file) do |ts,ip_loc,ip_for,dir,proto,len|
     ts = ts.to_f
@@ -28,15 +28,15 @@ CSV.foreach(sel_file) do |ts,ip_loc,ip_for,dir,proto,len|
 
     if ts > counter + Bin_size
         frame = []
-        ips.each_with_index {|ip, i|
+        instant.each {|burst|
             local = []
-            instant[i].each {|for_ip, bytes|
-                foreign = {d: for_ip, s: (bytes/Bin_size).round}
+            burst.each {|for_ip, bytes|
+                local << {f: for_ip, s: (bytes/Bin_size).round}
             }
             frame << local
         }
         rows << frame
-        instant = ([nil]*ips.length).map!{|x| h = {}; h.default = 0; h}
+        instant = ([nil]*ips.length).map!{|x| Hash.new(0)}
         counter += Bin_size
     end
 
@@ -47,5 +47,5 @@ CSV.foreach(sel_file) do |ts,ip_loc,ip_for,dir,proto,len|
 end
 
 File.open(dat_file, mode="w"){ |file|
-    file.puts JSON.fast_generate({num_loc_ips:ips.length,rows:rows})
+    file.puts JSON.fast_generate(rows)
 }
