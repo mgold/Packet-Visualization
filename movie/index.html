@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<title>Bandwidth vs. Time Per Host</title>
+		<title>PACKETS</title>
 		<script type="text/javascript" src="d3.v3.min.js"></script>
 		<style type="text/css">
             body {
@@ -20,27 +20,13 @@
                 fill: black;
             }
 
-            text.vert1, text.vert2, text.vert3 {
+            line.vert {
+                stroke: #444;
+            }
+            text.vert {
+                fill: #888;
                 font-family: sans-serif;
                 font-size: 12px;
-            }
-            line.vert1 {
-                stroke: #FFF;
-            }
-            text.vert1 {
-                fill: #FFF;
-            }
-            line.vert2 {
-                stroke: #BBB;
-            }
-            text.vert2 {
-                fill: #BBB;
-            }
-            line.vert3 {
-                stroke: #888;
-            }
-            text.vert3 {
-                fill: #888;
             }
 
             line.horiz {
@@ -121,30 +107,20 @@
                 .attr("y1", function(d){return y(d)})
                 .attr("y2", function(d){return y(d)})
 
-
-            function vert(block, cls){
+            for (var block = 0; block <= 224; block += 32){
                 var x_pos = Math.round(x(block << 8));
                 plot.append("line")
-                    .attr("class", "vert"+cls)
+                    .attr("class", "vert")
                     .attr("x1", x_pos)
                     .attr("x2", x_pos)
                     .attr("y1", 0)
                     .attr("y2", h);
                 svg.append("text")
-                    .attr("class", "vert"+cls)
+                    .attr("class", "vert")
                     .attr("text-anchor", "middle")
                     .attr("transform", "translate("+(leftroom+x_pos)+","+(headroom+h+footroom-5)+")")
                     .text(block+".0.0.0")
             }
-
-            vert(128, 1);
-            vert(64, 2);
-            vert(192, 2);
-            vert(0, 3);
-            vert(32, 3);
-            vert(96, 3);
-            vert(160, 3);
-            vert(224, 3);
 
             d3.csv(datafile).get(function(error, rows) {
 
@@ -154,7 +130,6 @@
                                 .transition()
                                 .delay((pkt.ts - t0) * 1000)
                                 .call(function(){
-                                    console.log((pkt.ts - t0) * 1000);
                                     plot.append("circle")
                                         .attr("class", pkt.proto)
                                         .attr("cx", x(pkt.ip_for))
