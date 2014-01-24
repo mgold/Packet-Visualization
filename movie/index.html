@@ -76,6 +76,9 @@
                 .range([0, w])
             var y = d3.scale.linear()
                 .range([0, h])
+            var proto = d3.scale.ordinal()
+                .domain(["T", "U", "H", "I"])
+                .range(["TCP", "UDP", "HTTP", "IP"])
 
 			var svg = d3.select("svg")
 						.attr("width", leftroom+w+rightroom)
@@ -149,7 +152,7 @@
                             .data(frame)
                             .enter()
                             .append("circle")
-                            .attr("class", "HTTP")
+                            .attr("class", function(d) {return proto(d.p)})
                             .attr("cx", function(d) {return x(d.f)})
                             .attr("cy", function(d) {return y(d.l)})
                             .attr("r", function(d) {return +Math.sqrt(d.s)/20})
