@@ -43,7 +43,7 @@ CSV.foreach(sel_file) do |ts,ip_loc,ip_for,dir,proto,len|
     if proto.start_with?("HTTP") then proto = "HTTP" end
     key_loc = ips.index(ip_loc)
     key_for = (IPAddr.new(ip_for).to_i & 0xFFFF0000) >> 16
-    instant[key_loc][key_for]
+    instant[key_loc][key_for] += len.to_i
 end
 
 File.open(dat_file, mode="w"){ |file|
