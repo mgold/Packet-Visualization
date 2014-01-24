@@ -80,7 +80,7 @@
                 .range([0, w])
             var y = d3.scale.linear()
                 .domain([0, num_loc_ips-1])
-                .range([h, 0])
+                .range([0, h])
 
 			var svg = d3.select("svg")
 						.attr("width", leftroom+w+rightroom)
@@ -122,28 +122,25 @@
                     .text(block+".0.0.0")
             }
 
-            d3.csv(datafile).get(function(error, rows) {
-
-                    for (var i = rows.length; i--;){
-                            var pkt = rows[i];
-                            plot.select("foo")
+    d3.csv(datafile).get(function(error, rows) {
+            for (var i = rows.length; i--;){
+                    (function(pkt){
+                        setTimeout( function (){
+                            plot.append("circle")
+                                .attr("class", pkt.proto)
+                                .attr("cx", x(pkt.ip_for))
+                                .attr("cy", y(pkt.loc_id))
+                                .attr("r", +Math.sqrt(pkt.len / 7))
+                                .style("opacity", 1)
                                 .transition()
-                                .delay((pkt.ts - t0) * 1000)
-                                .call(function(){
-                                    plot.append("circle")
-                                        .attr("class", pkt.proto)
-                                        .attr("cx", x(pkt.ip_for))
-                                        .attr("cy", y(pkt.loc_id))
-                                        .attr("r", +pkt.len / 100)
-                                        .style("opacity", 1)
-                                        .transition()
-                                        .duration(3000)
-                                        .style("opacity", 0)
-                                        .remove()
-                                });
-                    }
+                                .duration(3000)
+                                .style("opacity", 0)
+                                .remove()
+                        }, ((+pkt.ts - t0) * 1000));
+                        })(rows[i]);
+            }
 
-                });
+        });
 
 		</script>
 	</body>
