@@ -4,6 +4,7 @@
 		<meta charset="utf-8">
 		<title>Bandwidth vs. Time Per Host</title>
 		<script type="text/javascript" src="d3.v3.min.js"></script>
+        <script src="topojson.v0.min.js"></script>
 		<style type="text/css">
             body {
                 margin: 0;
@@ -67,6 +68,10 @@
             #subnet_controls {
                 font-family: sans-serif;
                 margin-left: 45px;
+            }
+
+            #map path {
+                fill: #CCC;
             }
 
 		</style>
@@ -149,6 +154,31 @@
             d3.selectAll("#subnet_controls input[name=mode]").on("change", function() {
                 reeval(this.value);
             })
+
+
+            //Map
+            var projection = d3.geo.equirectangular()
+                .translate([210, 110])
+                .scale(75);
+
+            var path = d3.geo.path()
+                .projection(projection);
+
+            var map = d3.select("body").append("svg")
+                .attr("width", w+leftroom+rightroom)
+                .attr("height", 190)
+            .append("g")
+                .attr("transform", "translate("+(w+ leftroom - 450)+",0)")
+                .attr("id", "map")
+
+            d3.json("world-110m2.json", function(error, topology) {
+                map.selectAll("path")
+                      .data(topojson.object(topology, topology.objects.countries)
+                            .geometries)
+                    .enter()
+                      .append("path")
+                      .attr("d", path)
+            });
 
             reeval("32"); //on startup
             function reeval(mask){
