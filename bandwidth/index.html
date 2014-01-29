@@ -79,6 +79,14 @@
                 opacity: 0.4;
             }
 
+            #brush_plot .extent {
+                fill: #0F9;
+                fill-opacity: .25;
+                stroke: #0F9;
+                stroke-opacity: 1;
+                stroke-wdith: 2px;
+            }
+
 		</style>
 	</head>
 	<body>
@@ -126,6 +134,25 @@
             var plot = svg.append("g")
                         .attr("transform", "translate("+leftroom+","+headroom+")")
                         .attr("id", "plot")
+
+            var brush_plot = d3.svg.brush()
+                .x(x)
+                .y(y)
+                .on("brushend", brush_plot_end);
+
+
+            function brush_plot_end(){
+                console.log(brush_plot.extent());
+                console.log(brush_plot.empty());
+            }
+
+
+            function brush_plot_begin(){
+                plot.append("g")
+                    .attr("class", "brush")
+                    .call(brush_plot)
+            }
+
 
             svg.append("text")
                 .attr("transform", "translate("+String(leftroom + (w/2))+",15)")
@@ -311,6 +338,11 @@
                                 svg.append("path")
                                    .attr("class", "dn vary")
                                    .attr("d", line(data.dn));
+
+                               plot.append("g")
+                                   .attr("class", "vary")
+                                   .attr("id", "brush_plot")
+                                   .call(brush_plot)
 
                             });
 
