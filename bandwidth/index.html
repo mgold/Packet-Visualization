@@ -184,6 +184,10 @@
                     .enter()
                       .append("path")
                       .attr("d", path)
+
+                mapText = map.append("text")
+                    .attr("transform", "translate(0,180)")
+                    .attr("class", "label")
             });
 
             var geoIPtable = {};
@@ -216,7 +220,7 @@
                         }
                     }
                 }
-
+                mapText.text("1 IP = 1 dot");
             }
 
 
