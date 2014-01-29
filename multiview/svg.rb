@@ -48,6 +48,7 @@ CSV.foreach(ppFile) do |ts,cap,dir,ip_loc,pt_loc,ip_for,pt_for,proto,len|
 
     if ts > counter + bin_size
         counter += bin_size
+
         up_cols << up_col.reverse!
         dn_cols << dn_col.reverse!
         up_col = [0] * height
@@ -92,7 +93,7 @@ colors = ["000000", "000045", "0000AD", "009C00", "ADD900", "D98600", "E80000"]
 
 geoIPs = Hash.new
 ips.each{|ip| loc = geo.city ip
-              if loc
+              if loc && (loc.longitude != 0 || loc.latitude != 0)
                   geoIPs[ip] = [loc.longitude.round(4).to_s,
                                 loc.latitude.round(4).to_s]
               end

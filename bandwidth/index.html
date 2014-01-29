@@ -74,11 +74,17 @@
                 fill: #CCC;
             }
 
+            #map circle {
+                fill: #333;
+                opacity: 0.4;
+            }
+
 		</style>
 	</head>
 	<body>
         <svg></svg>
         <div id="subnet_controls">
+          <button disabled name="button">Reset</button>
           Group IPs by subnet mask:
           <input name="mode" type="radio" value="16" id="subnet_16"><label for="subnet_16"> /16</label>
           <input name="mode" type="radio" value="24" id="subnet_24"><label for="subnet_24"> /24</label>
@@ -87,7 +93,8 @@
 		<script type="text/javascript">
 
             var datafile = "data/bandwidth.0-239.s",
-                densityfile = "data/bandwidth_density.0-239.s"
+                densityfile = "data/bandwidth_density.0-239.s",
+                geoIPfile = "data/geoIPs.json"
 
 			var w = 1300;
 			var h = 600;
@@ -155,7 +162,6 @@
                 reeval(this.value);
             })
 
-
             //Map
             var projection = d3.geo.equirectangular()
                 .translate([210, 110])
@@ -179,6 +185,41 @@
                       .append("path")
                       .attr("d", path)
             });
+
+            var geoIPtable = {};
+            d3.json(geoIPfile, function(err, json){
+                geoIPtable = json.geoIPs;
+                populateMap();
+            })
+
+            function populateMap(ips){
+
+                function addToMap(ip){
+                    var loc = geoIPtable[ip];
+                    if (loc){
+                        var proj = projection(loc);
+                        if (isNaN(proj[0])){
+                        }else{
+                            map.append("circle")
+                                .attr("cx", proj[0])
+                                .attr("cy", proj[1])
+                                .attr("r", 1)
+                            }
+                    }
+                }
+
+                if (ips){
+                }else{
+                    for (var key in geoIPtable) {
+                        if (geoIPtable.hasOwnProperty(key)) {
+                            addToMap(key);
+                        }
+                    }
+                }
+
+            }
+
+
 
             reeval("32"); //on startup
             function reeval(mask){
