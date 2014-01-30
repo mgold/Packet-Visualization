@@ -81,9 +81,9 @@
             }
 
             #brush_plot_num {
-                fill: #EEE;
+                fill: #AFFADE;
                 fill-opacity: 0.7;
-                stroke: #444;
+                stroke: #2F7058;
                 stroke-opacity: 0.7;
                 font-family: sans-serif;
             }
@@ -174,7 +174,7 @@
                     d3.text(url, function(err, resp){
                             d3.select("#brush_plot_num")
                                 .text(brush_plot.empty() ? "" : resp)
-                                .attr("transform", "translate("+(max_brush_x+10)+","+min_brush_y+")")
+                                .attr("transform", "translate("+(max_brush_x+10)+","+Math.max(min_brush_y, 100)+")")
                                 .attr("text-anchor", max_brush_x/w < 0.8 ? "start" : "end")
                                 .attr("font-size", Math.max(36, Math.min(+resp, 140)) +"px")
 
