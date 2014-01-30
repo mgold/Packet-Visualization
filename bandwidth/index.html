@@ -54,6 +54,7 @@
             .label {
                     font-family: sans-serif;
                     font-size: 12px;
+                    pointer-events: none;
             }
             .axis text {
                     font-family: sans-serif;
@@ -80,6 +81,14 @@
             }
 
             #plot .extent {
+                fill: #0F9;
+                fill-opacity: .25;
+                stroke: #0F9;
+                stroke-opacity: 1;
+                stroke-wdith: 2px;
+            }
+
+            #map .extent {
                 fill: #0F9;
                 fill-opacity: .25;
                 stroke: #0F9;
@@ -140,19 +149,16 @@
                 .y(y)
                 .on("brushend", brush_plot_end);
 
-
             function brush_plot_end(){
                 console.log(brush_plot.extent());
                 console.log(brush_plot.empty());
             }
 
-
-            function brush_plot_begin(){
-                plot.append("g")
-                    .attr("class", "brush")
-                    .call(brush_plot)
-            }
-
+            var brush_map = d3.svg.brush()
+                .on("brushend", function(){
+                    console.log(brush_map.extent());
+                    console.log(brush_map.empty());
+                })
 
             svg.append("text")
                 .attr("transform", "translate("+String(leftroom + (w/2))+",15)")
@@ -248,6 +254,10 @@
                     }
                 }
                 mapText.text("1 IP = 1 dot");
+                map.append("g")
+                    .attr("class", "vary")
+                    .call(brush_map)
+
             }
 
 
