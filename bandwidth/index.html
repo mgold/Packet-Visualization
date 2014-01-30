@@ -80,6 +80,14 @@
                 opacity: 0.4;
             }
 
+            #brush_plot_num {
+                fill: #EEE;
+                fill-opacity: 0.7;
+                stroke: #444;
+                stroke-opacity: 0.7;
+                font-family: sans-serif;
+            }
+
             #plot .extent {
                 fill: #0F9;
                 fill-opacity: .25;
@@ -147,11 +155,35 @@
             var brush_plot = d3.svg.brush()
                 .x(x)
                 .y(y)
-                .on("brushend", brush_plot_end);
+                .on("brushend", brush_plot_end)
+                .on("brush", brush_plot_move);
+
+            function brush_plot_move(){
+                var extent = brush_plot.extent(),
+                    min_bw = Math.floor(extent[0][1]),
+                    max_bw = Math.ceil(extent[1][1]),
+                    min_ts = extent[0][0].getTime() / 1000,
+                    max_ts = extent[1][0].getTime() / 1000,
+                    min_brush_x = x(extent[0][0]),
+                    min_brush_y = y(extent[1][1]),
+                    max_brush_x = x(extent[1][0]),
+                    max_brush_y = y(extent[0][1]),
+                    brush_w = max_brush_x - min_brush_x;
+                    brush_h = max_brush_y - min_brush_y;
+                    url = "http://max.t.axfp.org/api/countBandwidth.php?min_bw="+min_bw +"&max_bw="+max_bw+"&min_ts="+min_ts+"&max_ts="+max_ts;
+                    d3.text(url, function(err, resp){
+                            d3.select("#brush_plot_num")
+                                .text(brush_plot.empty() ? "" : resp)
+                                .attr("transform", "translate("+(max_brush_x+10)+","+min_brush_y+")")
+                                .attr("text-anchor", max_brush_x/w < 0.8 ? "start" : "end")
+                                .attr("font-size", Math.max(36, Math.min(+resp, 140)) +"px")
+
+                        });
+            }
 
             function brush_plot_end(){
-                console.log(brush_plot.extent());
-                console.log(brush_plot.empty());
+                //console.log(brush_plot.extent());
+                //console.log(brush_plot.empty());
             }
 
             var brush_map = d3.svg.brush()
@@ -352,6 +384,8 @@
                                plot.append("g")
                                    .attr("class", "vary")
                                    .call(brush_plot)
+                                   .append("text")
+                                   .attr("id", "brush_plot_num")
 
                             });
 
