@@ -80,6 +80,11 @@
                 opacity: 0.4;
             }
 
+            .mapSelLabel {
+                font-style: italic;
+                fill: #0F9;
+            }
+
             #brush_plot_num {
                 fill: #AFFADE;
                 fill-opacity: 0.7;
@@ -159,6 +164,11 @@
                 .on("brush", brush_plot_move);
 
             function brush_plot_move(){
+                if (brush_plot.empty()){
+                    d3.select("#brush_plot_num").text("");
+                    return;
+                }
+                mapText.text("Selection");
                 var extent = brush_plot.extent(),
                     min_bw = Math.floor(extent[0][1]),
                     max_bw = Math.ceil(extent[1][1]),
@@ -170,18 +180,31 @@
                     max_brush_y = y(extent[0][1]),
                     brush_w = max_brush_x - min_brush_x;
                     brush_h = max_brush_y - min_brush_y;
-                    url = "http://max.t.axfp.org/api/countBandwidth.php?min_bw="+min_bw +"&max_bw="+max_bw+"&min_ts="+min_ts+"&max_ts="+max_ts;
+                    url = "http://max.t.axfp.org/api/ipsBandwidth.php?min_bw="+min_bw +"&max_bw="+max_bw+"&min_ts="+min_ts+"&max_ts="+max_ts;
                     d3.text(url, function(err, resp){
+                            var ips = resp.split("\n");
                             d3.select("#brush_plot_num")
-                                .text(brush_plot.empty() ? "" : resp)
+                                .text(ips.length)
                                 .attr("transform", "translate("+(max_brush_x+10)+","+Math.max(min_brush_y, 100)+")")
                                 .attr("text-anchor", max_brush_x/w < 0.8 ? "start" : "end")
-                                .attr("font-size", Math.max(36, Math.min(+resp, 140)) +"px")
+                                .attr("font-size", Math.max(36, Math.min(ips.length, 140)) +"px")
 
-                        });
+                            map.selectAll("circle").remove();
+                            map.selectAll("circle")
+                                .data(ips.map(function(d){return geoIPtable[d]})
+                                         .filter(function(d){return d})
+                                         .map(function(d){return projection(d)})
+                                         .filter(function(d){return !isNaN(d[0])}))
+                                .enter()
+                                .append("circle")
+                                .attr("cx", function(d){return d[0]})
+                                .attr("cy", function(d){return d[1]})
+                                .attr("r", 1)
+                    });
             }
 
             function brush_plot_end(){
+                if (brush_plot.empty()){ populateMap(); }
                 //console.log(brush_plot.extent());
                 //console.log(brush_plot.empty());
             }
@@ -251,8 +274,13 @@
                       .attr("d", path)
 
                 mapText = map.append("text")
-                    .attr("transform", "translate(0,180)")
+                    .attr("transform", "translate(0,175)")
+                    .attr("class", "label mapSelLabel")
+
+                map.append("text")
+                    .attr("transform", "translate(0,190)")
                     .attr("class", "label")
+                    .text("1 IP = 1 dot");
             });
 
             var geoIPtable = {};
@@ -279,16 +307,20 @@
 
                 if (ips){
                 }else{
+                    map.selectAll("circle").remove();
+                    mapText.text("");
                     for (var key in geoIPtable) {
                         if (geoIPtable.hasOwnProperty(key)) {
                             addToMap(key);
                         }
                     }
+
                 }
-                mapText.text("1 IP = 1 dot");
+                /*
                 map.append("g")
                     .attr("class", "vary")
                     .call(brush_map)
+                */
 
             }
 
