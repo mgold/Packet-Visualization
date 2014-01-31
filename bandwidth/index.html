@@ -95,7 +95,7 @@
                 fill-opacity: .25;
                 stroke: #0F9;
                 stroke-opacity: 1;
-                stroke-wdith: 2px;
+                stroke-width: 2px;
             }
 
             #map .extent {
@@ -107,12 +107,16 @@
             }
 
             .legend_label {
-                    font-family: sans-serif;
-                    font-size: 16px;
-                    pointer-events: auto;
+                font-family: sans-serif;
+                font-size: 16px;
+                pointer-events: auto;
             }
             .legend_label:hover {
                 font-weight: bold;
+            }
+
+            #map .extraBig {
+                opacity: 1.0;
             }
 
 
@@ -132,7 +136,7 @@
           Show:
           <input name="zoom" type="radio" value="up" id="zoom_up"><label for="zoom_up"> Uploads Only</label>
           <input name="zoom" type="radio" value="dn" id="zoom_dn"><label for="zoom_dn"> Downloads Only</label>
-          <input name="zoom" type="radio" value="both" id="zoom_both" checked><label for="zoom_both"> Both</label>
+          <input name="zoom" type="radio" value="both" id="zoom_both" checked><label for="zoom_both"> Uploads and Downloads</label>
           </span>
         </div>
 		<script type="text/javascript">
@@ -250,9 +254,22 @@
                                     plot.selectAll("circle")
                                         .data(rows)
                                         .filter(function(g){return g.ip == d})
-                                        .attr("r", 3.7)
+                                        .attr("r", 3.7);
+                                    var loc = geoIPtable[d];
+                                    if (loc) {
+                                        var proj = projection(loc);
+                                        if (!isNaN(proj[0])){
+                                            map.append("circle")
+                                                .attr("cx", proj[0])
+                                                .attr("cy", proj[1])
+                                                .attr("r", 7)
+                                                .style("fill", colors(d))
+                                                .attr("class", "extraBig")
+                                        }
+                                    }
                                 })
                                 .on("mouseout", function(d){
+                                    map.selectAll(".extraBig").remove();
                                     plot.selectAll("circle")
                                         .data(rows)
                                         .attr("r", 1.7)
