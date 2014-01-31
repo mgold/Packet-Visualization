@@ -327,7 +327,7 @@
                     .text("line")
                 .append("tspan")
                     .style("font-weight", "normal")
-                    .text(", IP on hover)")
+                    .text(")")
 
             var axes_done = false;
 
@@ -454,8 +454,6 @@
                                 .attr("cx", function(d) { return x(d.upt) })
                                 .attr("cy", function(d) { return y(d.up) })
                                 .attr("r", 2)
-                                .append("svg:title")
-                                .text(function(d) { return mask == "32" ? d.ip : d.ip+"/"+mask; })
 
                             plot.selectAll(".dn")
                                 .data(rows)
@@ -466,8 +464,6 @@
                                 .attr("cx", function(d) { return x(d.dnt) })
                                 .attr("cy", function(d) { return y(d.dn) })
                                 .attr("r", 2)
-                                .append("svg:title")
-                                .text(function(d) { return mask == "32" ? d.ip : d.ip+"/"+mask; })
 
                             if (!axes_done){
                                 axes_done = true;
