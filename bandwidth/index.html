@@ -246,7 +246,16 @@
                                 .attr("transform", function(d,i){return "translate(0,"+(20 + 20 * i)+")"})
                                 .style("fill", function(d){return colors(d)})
                                 .text(function(d){return d})
-                                .on("mouseover", function(d){console.log(d);
+                                .on("mouseover", function(d){
+                                    plot.selectAll("circle")
+                                        .data(rows)
+                                        .filter(function(g){return g.ip == d})
+                                        .attr("r", 3.7)
+                                })
+                                .on("mouseout", function(d){
+                                    plot.selectAll("circle")
+                                        .data(rows)
+                                        .attr("r", 1.7)
                                 })
 
                             plot.selectAll(".zoomed")
@@ -266,9 +275,8 @@
             d3.selectAll("#subnet_controls input[name=zoom]").on("change", function() {
                 var setting = this.value;
                 plot.selectAll("circle")
-                    .attr("r", function(d){
-                        if (setting == "both") { return 1.7 }
-                        return setting == d.dir ? 1.7 : 0;
+                    .attr("visibility", function(d){
+                        return (setting == "both" || setting == d.dir) ? undefined : "hidden";
                     })
             })
 
