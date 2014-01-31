@@ -232,6 +232,7 @@
                             var colors = d3.scale.category10().domain(ips)
 
                             plot.selectAll(".vary").remove();
+                            top_label(true);
                             brush_plot.clear();
                             d3.select("#brush_plot_num").text("");
                             mapText.text("");
@@ -300,6 +301,7 @@
             d3.select("button")
                 .attr("onclick", "reset()");
             function reset(){
+                top_label(false);
                 d3.select("button").attr("disabled", true)
                 d3.select("#subnetControls").style("display", undefined)
                 d3.select("#zoomControls").style("display", "none")
@@ -317,34 +319,46 @@
                 })
             */
 
-            svg.append("text")
-                .attr("transform", "translate("+String(leftroom + (w/2))+",15)")
-                .attr("class", "label")
-                .attr("text-anchor", "middle")
-                .append("tspan")
-                    .text("Maximum bandwidth vs. time, for ")
-                .append("tspan")
-                    .attr("class", "up")
-                    .style("opacity", 1)
-                    .text("uploads")
-                .append("tspan")
-                    .style("fill", "black")
-                    .style("stroke", "none")
-                    .text(" and ")
-                .append("tspan")
-                    .attr("class", "dn")
-                    .style("opacity", 1)
-                    .text("downloads")
-                .append("tspan")
-                    .style("fill", "black")
-                    .style("stroke", "none")
-                    .text(", per foreign host (connected by ")
-                .append("tspan")
-                    .style("font-weight", "bold")
-                    .text("line")
-                .append("tspan")
-                    .style("font-weight", "normal")
-                    .text(")")
+            function top_label(zoomed){
+                svg.select(".top_label").remove();
+                if (zoomed){
+                svg.append("text")
+                    .attr("transform", "translate("+String(leftroom + (w/2))+",15)")
+                    .attr("class", "label top_label")
+                    .attr("text-anchor", "middle")
+                    .text("All bandwidth in 3-second bins for selected IPs listed below, also found on map. Hover over IPs to emphasize.")
+                }else{
+                    svg.append("text")
+                        .attr("transform", "translate("+String(leftroom + (w/2))+",15)")
+                        .attr("class", "label top_label")
+                        .attr("text-anchor", "middle")
+                        .append("tspan")
+                            .text("Maximum bandwidth vs. time, for ")
+                        .append("tspan")
+                            .attr("class", "up")
+                            .style("opacity", 1)
+                            .text("uploads")
+                        .append("tspan")
+                            .style("fill", "black")
+                            .style("stroke", "none")
+                            .text(" and ")
+                        .append("tspan")
+                            .attr("class", "dn")
+                            .style("opacity", 1)
+                            .text("downloads")
+                        .append("tspan")
+                            .style("fill", "black")
+                            .style("stroke", "none")
+                            .text(", per foreign host (connected by ")
+                        .append("tspan")
+                            .style("font-weight", "bold")
+                            .text("line")
+                        .append("tspan")
+                            .style("font-weight", "normal")
+                            .text(")")
+                        }
+            }
+            top_label(false);
 
             var axes_done = false;
 
