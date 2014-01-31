@@ -115,10 +115,18 @@
         <svg></svg>
         <div id="subnet_controls">
           <button disabled name="button">Reset</button>
+          <span id="subnetControls">
           Group IPs by subnet mask:
           <input name="mode" type="radio" value="16" id="subnet_16"><label for="subnet_16"> /16</label>
           <input name="mode" type="radio" value="24" id="subnet_24"><label for="subnet_24"> /24</label>
           <input name="mode" type="radio" value="32" id="subnet_32" checked><label for="subnet_32"> /32</label>
+          </span>
+          <span id="zoomControls" style="display: none;">
+          Show:
+          <input name="zoom" type="radio" value="up" id="zoom_up"><label for="zoom_up"> Uploads Only</label>
+          <input name="zoom" type="radio" value="dn" id="zoom_dn"><label for="zoom_dn"> Downloads Only</label>
+          <input name="zoom" type="radio" value="both" id="zoom_both" checked><label for="zoom_both"> Both</label>
+          </span>
         </div>
 		<script type="text/javascript">
 
@@ -132,6 +140,8 @@
             var headroom = 20;
             var footroom = 20;
             var rightroom = 20;
+
+            var group_mask = "32";
 
             var x = d3.time.scale()
                 .range([0, w])
@@ -223,7 +233,11 @@
                             d3.select("#brush_plot_num").text("");
                             mapText.text("");
                             d3.select("button").attr("disabled", undefined)
-                            d3.selectAll("input").attr("disabled", true)
+                            d3.select("#subnetControls").style("display", "none")
+                            d3.select("#zoomControls").style("display", undefined)
+                            document.getElementById('zoom_up').checked = false;
+                            document.getElementById('zoom_dn').checked = false;
+                            document.getElementById('zoom_both').checked = true;
 
                             legend.selectAll("text")
                                 .data(ips)
@@ -240,7 +254,7 @@
                                 .append("circle")
                                 .attr("cx", function(d){return x(d.ts)})
                                 .attr("cy", function(d){return y(d.bps)})
-                                .attr("r", 1)
+                                .attr("r", 1.7)
                                 .style("fill", function(d){return colors(d.ip)})
 
                             map.selectAll("circle").remove();
@@ -259,22 +273,34 @@
                         });
             }
 
+            d3.selectAll("#subnet_controls input[name=zoom]").on("change", function() {
+                var setting = this.value;
+                plot.selectAll("circle")
+                    .attr("r", function(d){
+                        if (setting == "both") { return 1.7 }
+                        return setting == d.dir ? 1.7 : 0;
+                    })
+            })
+
             d3.select("button")
                 .attr("onclick", "reset()");
             function reset(){
                 d3.select("button").attr("disabled", true)
-                d3.selectAll("input").attr("disabled", undefined)
+                d3.select("#subnetControls").style("display", undefined)
+                d3.select("#zoomControls").style("display", "none")
                 plot.selectAll("circle").remove();
                 legend.selectAll("text").remove();
                 reeval(group_mask);
                 populateMap();
                 }
 
+            /*
             var brush_map = d3.svg.brush()
                 .on("brushend", function(){
                     console.log(brush_map.extent());
                     console.log(brush_map.empty());
                 })
+            */
 
             svg.append("text")
                 .attr("transform", "translate("+String(leftroom + (w/2))+",15)")
@@ -306,10 +332,6 @@
                     .text(", IP on hover)")
 
             var axes_done = false;
-
-            d3.selectAll("#subnet_controls input[name=mode]").on("change", function() {
-                reeval(this.value);
-            })
 
             //Map
             var projection = d3.geo.equirectangular()
@@ -388,8 +410,10 @@
             }
 
 
+            d3.selectAll("#subnet_controls input[name=mode]").on("change", function() {
+                reeval(this.value);
+            })
 
-            var group_mask = "32";
             reeval(group_mask); //on startup
             function reeval(mask){
                 group_mask = mask;
