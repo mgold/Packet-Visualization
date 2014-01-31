@@ -231,7 +231,7 @@
                             var ips = d3.set(rows.map(function(d){return d.ip})).values()
                             var colors = d3.scale.category10().domain(ips)
 
-                            plot.selectAll(".vary").remove();
+                            svg.selectAll(".vary").remove();
                             top_label(true);
                             brush_plot.clear();
                             d3.select("#brush_plot_num").text("");
