@@ -204,9 +204,37 @@
             }
 
             function brush_plot_end(){
-                if (brush_plot.empty()){ populateMap(); }
-                //console.log(brush_plot.extent());
-                //console.log(brush_plot.empty());
+                if (brush_plot.empty()){ populateMap(); return}
+                var extent = brush_plot.extent(),
+                    min_bw = Math.floor(extent[0][1]),
+                    max_bw = Math.ceil(extent[1][1]),
+                    min_ts = extent[0][0].getTime() / 1000,
+                    max_ts = extent[1][0].getTime() / 1000,
+                    url = "http://max.t.axfp.org/api/selectBandwidth.php?min_bw="+min_bw +"&max_bw="+max_bw+"&min_ts="+min_ts+"&max_ts="+max_ts;
+                    d3.csv(url)
+                        .row(function(d) {return {ip: d.ip, dir: d.dir, ts: new Date(+d.ts * 1000), bps: +d.bps} })
+                        .get(function(error, rows) {
+                            if (rows.length == 0){return}
+                            var colors = d3.scale.category10()
+                                        .domain(d3.set(rows.map(function(d){return d.ip})).values())
+
+                            plot.selectAll(".vary").remove();
+                            brush_plot.clear();
+                            d3.select("#brush_plot_num").text("");
+                            mapText.text("");
+
+                            plot.selectAll(".zoomed")
+                                .data(rows)
+                                .enter()
+                                .append("circle")
+                                .attr("cx", function(d){return x(d.ts)})
+                                .attr("cy", function(d){return y(d.bps)})
+                                .attr("r", 1)
+                                .style("fill", function(d){return colors(d.ip)})
+
+                        });
+
+
             }
 
             var brush_map = d3.svg.brush()
