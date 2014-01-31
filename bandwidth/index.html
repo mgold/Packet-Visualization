@@ -201,7 +201,7 @@
                     max_brush_y = y(extent[0][1]),
                     brush_w = max_brush_x - min_brush_x;
                     brush_h = max_brush_y - min_brush_y;
-                    url = "http://max.t.axfp.org/api/ipsBandwidth.php?min_bw="+min_bw +"&max_bw="+max_bw+"&min_ts="+min_ts+"&max_ts="; // +max_ts+"&mask="+mask;
+                    url = "http://max.t.axfp.org/api/ipsBandwidth.php?min_bw="+min_bw +"&max_bw="+max_bw+"&min_ts="+min_ts+"&max_ts="+max_ts; +"&mask="+mask;
                     d3.text(url, function(err, resp){
                             var ips = resp.split("\n");
                             d3.select("#brush_plot_num")
