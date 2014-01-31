@@ -222,6 +222,8 @@
                             brush_plot.clear();
                             d3.select("#brush_plot_num").text("");
                             mapText.text("");
+                            d3.select("button").attr("disabled", undefined)
+                            d3.selectAll("input").attr("disabled", true)
 
                             legend.selectAll("text")
                                 .data(ips)
@@ -254,11 +256,19 @@
                                 .attr("r", 2)
                                 .style("fill", function(d,i){return colors(ips[i])})
                                 .style("opacity", 1.0)
-
                         });
-
-
             }
+
+            d3.select("button")
+                .attr("onclick", "reset()");
+            function reset(){
+                d3.select("button").attr("disabled", true)
+                d3.selectAll("input").attr("disabled", undefined)
+                plot.selectAll("circle").remove();
+                legend.selectAll("text").remove();
+                reeval(group_mask);
+                populateMap();
+                }
 
             var brush_map = d3.svg.brush()
                 .on("brushend", function(){
@@ -379,8 +389,10 @@
 
 
 
-            reeval("32"); //on startup
+            var group_mask = "32";
+            reeval(group_mask); //on startup
             function reeval(mask){
+                group_mask = mask;
                 d3.csv(datafile+mask+".csv")
                     .row(function(d) { return { ip: d.ip
                                               , up: +d.up
