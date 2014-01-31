@@ -152,7 +152,7 @@
             var footroom = 20;
             var rightroom = 20;
 
-            var group_mask = "32";
+            var mask = "32";
 
             var x = d3.time.scale()
                 .range([0, w])
@@ -201,7 +201,7 @@
                     max_brush_y = y(extent[0][1]),
                     brush_w = max_brush_x - min_brush_x;
                     brush_h = max_brush_y - min_brush_y;
-                    url = "http://max.t.axfp.org/api/ipsBandwidth.php?min_bw="+min_bw +"&max_bw="+max_bw+"&min_ts="+min_ts+"&max_ts="+max_ts;
+                    url = "http://max.t.axfp.org/api/ipsBandwidth.php?min_bw="+min_bw +"&max_bw="+max_bw+"&min_ts="+min_ts+"&max_ts="; // +max_ts+"&mask="+mask;
                     d3.text(url, function(err, resp){
                             var ips = resp.split("\n");
                             d3.select("#brush_plot_num")
@@ -307,7 +307,7 @@
                 d3.select("#zoomControls").style("display", "none")
                 plot.selectAll("circle").remove();
                 legend.selectAll("text").remove();
-                reeval(group_mask);
+                reeval(mask);
                 populateMap();
                 }
 
@@ -440,12 +440,12 @@
 
 
             d3.selectAll("#subnet_controls input[name=mode]").on("change", function() {
-                reeval(this.value);
+                mask = this.value;
+                reeval();
             })
 
-            reeval(group_mask); //on startup
-            function reeval(mask){
-                group_mask = mask;
+            reeval(mask); //on startup
+            function reeval(){
                 d3.csv(datafile+mask+".csv")
                     .row(function(d) { return { ip: d.ip
                                               , up: +d.up
