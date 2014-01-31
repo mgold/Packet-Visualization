@@ -56,14 +56,11 @@
                     font-size: 12px;
                     pointer-events: none;
             }
+
             .axis text {
                     font-family: sans-serif;
                     font-size: 10px;
-            }
-
-            .xaxis text {
-                    font-weight: bold;
-                    font-size: 11px;
+                    pointer-events: none;
             }
 
             #subnet_controls {
@@ -108,6 +105,16 @@
                 stroke-opacity: 1;
                 stroke-wdith: 2px;
             }
+
+            .legend_label {
+                    font-family: sans-serif;
+                    font-size: 16px;
+                    pointer-events: auto;
+            }
+            .legend_label:hover {
+                font-weight: bold;
+            }
+
 
 		</style>
 	</head>
@@ -199,17 +206,9 @@
                                 .attr("text-anchor", max_brush_x/w < 0.8 ? "start" : "end")
                                 .attr("font-size", Math.max(36, Math.min(ips.length, 140)) +"px")
 
+
                             map.selectAll("circle").remove();
-                            map.selectAll("circle")
-                                .data(ips.map(function(d){return geoIPtable[d]})
-                                         .filter(function(d){return d})
-                                         .map(function(d){return projection(d)})
-                                         .filter(function(d){return !isNaN(d[0])}))
-                                .enter()
-                                .append("circle")
-                                .attr("cx", function(d){return d[0]})
-                                .attr("cy", function(d){return d[1]})
-                                .attr("r", 1)
+                            populateMap(ips);
                     });
             }
 
@@ -243,10 +242,12 @@
                                 .data(ips)
                                 .enter()
                                 .append("text")
-                                .attr("class", "label")
+                                .attr("class", "legend_label")
                                 .attr("transform", function(d,i){return "translate(0,"+(20 + 20 * i)+")"})
                                 .style("fill", function(d){return colors(d)})
                                 .text(function(d){return d})
+                                .on("mouseover", function(d){console.log(d);
+                                })
 
                             plot.selectAll(".zoomed")
                                 .data(rows)
@@ -258,18 +259,7 @@
                                 .style("fill", function(d){return colors(d.ip)})
 
                             map.selectAll("circle").remove();
-                            map.selectAll("circle")
-                                .data(ips.map(function(d){return geoIPtable[d]})
-                                         .filter(function(d){return d})
-                                         .map(function(d){return projection(d)})
-                                         .filter(function(d){return !isNaN(d[0])}))
-                                .enter()
-                                .append("circle")
-                                .attr("cx", function(d){return d[0]})
-                                .attr("cy", function(d){return d[1]})
-                                .attr("r", 2)
-                                .style("fill", function(d,i){return colors(ips[i])})
-                                .style("opacity", 1.0)
+                            populateMap(ips, 2, colors);
                         });
             }
 
@@ -374,39 +364,39 @@
                 populateMap();
             })
 
-            function populateMap(ips){
-
-                function addToMap(ip){
-                    var loc = geoIPtable[ip];
-                    if (loc){
-                        var proj = projection(loc);
-                        if (isNaN(proj[0])){
-                        }else{
-                            map.append("circle")
-                                .attr("cx", proj[0])
-                                .attr("cy", proj[1])
-                                .attr("r", 1)
-                            }
-                    }
-                }
-
+            function populateMap(ips, r, colors){
                 if (ips){
+                    map.selectAll("circle")
+                        .data(ips.map(function(d){return geoIPtable[d]})
+                                 .filter(function(d){return d})
+                                 .map(function(d){return projection(d)})
+                                 .filter(function(d){return !isNaN(d[0])}))
+                        .enter()
+                        .append("circle")
+                        .attr("cx", function(d){return d[0]})
+                        .attr("cy", function(d){return d[1]})
+                        .attr("r", r || 1)
+                        .style("fill", function(d,i){return colors ? colors(ips[i]) : undefined})
+                        .style("opacity", 1.0)
                 }else{
                     map.selectAll("circle").remove();
                     mapText.text("");
                     for (var key in geoIPtable) {
                         if (geoIPtable.hasOwnProperty(key)) {
-                            addToMap(key);
+                            var loc = geoIPtable[key];
+                            if (loc){
+                                var proj = projection(loc);
+                                if (isNaN(proj[0])){
+                                }else{
+                                    map.append("circle")
+                                        .attr("cx", proj[0])
+                                        .attr("cy", proj[1])
+                                        .attr("r", 1)
+                                }
+                            }
                         }
                     }
-
                 }
-                /*
-                map.append("g")
-                    .attr("class", "vary")
-                    .call(brush_map)
-                */
-
             }
 
 
