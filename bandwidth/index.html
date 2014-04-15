@@ -145,6 +145,7 @@
             var datafile = "data/bandwidth.0-239.s",
                 densityfile = "data/bandwidth_density.0-239.s",
                 geoIPfile = "data/geoIPs.json"
+                dnsfile = "data/reverse_dns.json"
 
 			var w = 1300;
 			var h = 600;
@@ -276,6 +277,9 @@
                                         .data(rows)
                                         .attr("r", 1.7)
                                 })
+                                .append("tspan")
+                                .attr("dx", function(d){return 170 - this.getBBox().width})
+                                .text(function(d){return (dns[d] || "")})
 
                             plot.selectAll(".zoomed")
                                 .data(rows)
@@ -398,6 +402,10 @@
                     .text("1 IP = 1 dot");
             });
 
+            var dns = {};
+            d3.json(dnsfile, function(err, json){
+                dns = json;
+            })
             var geoIPtable = {};
             d3.json(geoIPfile, function(err, json){
                 geoIPtable = json.geoIPs;
