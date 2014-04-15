@@ -22,9 +22,15 @@ $min_ts <= $max_ts or die("min ts > max ts");
 $query="select ip from bw_max where bps < " . $max_bw . " and bps > " . $min_bw . " and ts < " . $max_ts . " and ts > " . $min_ts;
 $result = mysql_query($query);
 
+$first_iter = true;
+
 if(mysql_num_rows($result)) {
   while($value = mysql_fetch_assoc($result)) {
-          echo $value["ip"] . "\n";
+          if (! $first_iter){
+              echo "\n";
+          }
+          $first_iter = false;
+          echo $value["ip"];
       }
 }
 
