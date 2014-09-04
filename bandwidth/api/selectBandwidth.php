@@ -3,6 +3,7 @@
 include 'mysqlConfig.php';
 
 header('Content-type: text/plain; charset=us-ascii');
+header("Access-Control-Allow-Origin: *");
 
 @mysql_select_db($dsn) or die( "Unable to select database");
 
