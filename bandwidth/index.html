@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<title>Bandwidth vs. Time Per Host</title>
-		<script type="text/javascript" src="d3.v3.min.js"></script>
+    <head>
+        <meta charset="utf-8">
+        <title>Bandwidth vs. Time Per Host</title>
+        <script type="text/javascript" src="d3.v3.min.js"></script>
         <script src="topojson.v0.min.js"></script>
-		<style type="text/css">
+        <style type="text/css">
             body {
                 margin: 0;
             }
@@ -120,9 +120,9 @@
             }
 
 
-		</style>
-	</head>
-	<body>
+        </style>
+    </head>
+    <body>
         <svg></svg>
         <div id="subnet_controls">
           <button disabled name="button">Reset</button>
@@ -140,15 +140,15 @@
           <input name="zoom" type="radio" value="both" id="zoom_both" checked><label for="zoom_both"> Uploads and Downloads</label>
           </span>
         </div>
-		<script type="text/javascript">
+        <script type="text/javascript">
 
             var datafile = "data/bandwidth.0-239.s",
                 densityfile = "data/bandwidth_density.0-239.s",
                 geoIPfile = "data/geoIPs.json"
                 dnsfile = "data/reverse_dns.json"
 
-			var w = 1300;
-			var h = 600;
+            var w = 1300;
+            var h = 600;
             var leftroom = 45;
             var headroom = 20;
             var footroom = 20;
@@ -173,9 +173,9 @@
                                             return "";
                                         })
 
-			var svg = d3.select("svg")
-						.attr("width", leftroom+w+rightroom)
-						.attr("height", headroom+h+footroom);
+            var svg = d3.select("svg")
+                        .attr("width", leftroom+w+rightroom)
+                        .attr("height", headroom+h+footroom);
             var plot = svg.append("g")
                         .attr("transform", "translate("+leftroom+","+headroom+")")
                         .attr("id", "plot")
@@ -547,6 +547,6 @@
                         });
                     }
 
-		</script>
-	</body>
+        </script>
+    </body>
 </html>
