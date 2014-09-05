@@ -144,7 +144,7 @@
 
             var datafile = "data/bandwidth.0-239.s",
                 densityfile = "data/bandwidth_density.0-239.s",
-                geoIPfile = "data/geoIPs.json"
+                geoIPfile = "data/geoIPs.json",
                 dnsfile = "data/reverse_dns.json"
 
             var w = 1300;
@@ -203,7 +203,7 @@
                     max_brush_y = y(extent[0][1]),
                     brush_w = max_brush_x - min_brush_x;
                     brush_h = max_brush_y - min_brush_y;
-                    url = "http://max.t.axfp.org/api/ipsBandwidth.php?min_bw="+min_bw +"&max_bw="+max_bw+"&min_ts="+min_ts+"&max_ts="+max_ts; +"&mask="+mask;
+                    url = location.href+"api/ipsBandwidth.php?min_bw="+min_bw +"&max_bw="+max_bw+"&min_ts="+min_ts+"&max_ts="+max_ts; +"&mask="+mask;
                     d3.text(url, function(err, resp){
                             var ips = resp.split("\n");
                             d3.select("#brush_plot_num")
@@ -225,7 +225,7 @@
                     max_bw = Math.ceil(extent[1][1]),
                     min_ts = extent[0][0].getTime() / 1000,
                     max_ts = extent[1][0].getTime() / 1000,
-                    url = "http://max.t.axfp.org/api/selectBandwidth.php?min_bw="+min_bw +"&max_bw="+max_bw+"&min_ts="+min_ts+"&max_ts="+max_ts;
+                    url = location.href+"api/selectBandwidth.php?min_bw="+min_bw +"&max_bw="+max_bw+"&min_ts="+min_ts+"&max_ts="+max_ts;
                     d3.csv(url)
                         .row(function(d) {return {ip: d.ip, dir: d.dir, ts: new Date(+d.ts * 1000), bps: +d.bps} })
                         .get(function(error, rows) {
@@ -377,7 +377,7 @@
 
             var footer = d3.select("body").append("svg")
                 .attr("width", w+leftroom+rightroom)
-                .attr("height", 190)
+                .attr("height", 200)
             var map = footer.append("g")
                 .attr("transform", "translate("+(w+ leftroom - 450)+",0)")
                 .attr("id", "map")

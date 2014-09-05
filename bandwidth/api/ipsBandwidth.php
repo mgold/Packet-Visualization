@@ -1,11 +1,10 @@
 <?php
 
-include 'mysqlConfig.php';
+include 'postgresConfig.php';
 
 header('Content-type: text/plain; charset=us-ascii');
 header("Access-Control-Allow-Origin: *");
-
-@mysql_select_db($dsn) or die( "Unable to select database");
+http_response_code(400);
 
 $min_bw = intval($_GET["min_bw"]);
 $min_bw > 0 or $_GET["min_bw"] === "0" or die("Bad minimum bandwidth");
@@ -19,13 +18,15 @@ $max_ts = intval($_GET["max_ts"]);
 $max_ts !== 0 or die("Bad maximum timestamp");
 $min_ts <= $max_ts or die("min ts > max ts");
 
+http_response_code(500);
 $query="select ip from bw_max where bps < " . $max_bw . " and bps > " . $min_bw . " and ts < " . $max_ts . " and ts > " . $min_ts;
-$result = mysql_query($query);
+$result = pg_query($query) or die('Query failed: ' . pg_last_error());
 
 $first_iter = true;
 
-if(mysql_num_rows($result)) {
-  while($value = mysql_fetch_assoc($result)) {
+http_response_code(200);
+if(pg_num_rows($result)) {
+  while($value = pg_fetch_assoc($result)) {
           if (! $first_iter){
               echo "\n";
           }
@@ -34,6 +35,7 @@ if(mysql_num_rows($result)) {
       }
 }
 
-mysql_close();
+pg_free_result($result);
+pg_close($dbconn);
 
 ?>
