@@ -19,14 +19,14 @@ $max_ts !== 0 or die("Bad maximum timestamp");
 $min_ts <= $max_ts or die("min ts > max ts");
 
 http_response_code(500);
-$query="select count(*) from bw_max where bps < " . $max_bw . " and bps > " . $min_bw . " and ts < " . $max_ts . " and ts > " . $min_ts;
+$query= pg_escape_string("select count(*) from bw_max where bps < " . $max_bw . " and bps > " . $min_bw . " and ts < " . $max_ts . " and ts > " . $min_ts);
 $result = pg_query($query) or die('Query failed: ' . pg_last_error());
 
 http_response_code(200);
 intval(pg_fetch_assoc($result)["count"]) < 10 or die("Error: Too many IPs");
 http_response_code(500);
 
-$query="create temporary table selectedIPs as (select distinct ip from bw_max where bps < " . $max_bw . " and bps > " . $min_bw . " and ts < " . $max_ts . " and ts > " . $min_ts ." limit 10)";
+$query=pg_escape_string("create temporary table selectedIPs as (select distinct ip from bw_max where bps < " . $max_bw . " and bps > " . $min_bw . " and ts < " . $max_ts . " and ts > " . $min_ts ." limit 10)");
 $result = pg_query($query) or die('Query failed: ' . pg_last_error());
 $query="select bw.ip, dir, ts, bps from bw inner join selectedIPs on bw.ip = selectedIPs.ip order by bw.ip, dir, ts";
 $result = pg_query($query) or die('Query failed: ' . pg_last_error());

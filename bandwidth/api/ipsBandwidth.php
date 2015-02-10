@@ -19,7 +19,7 @@ $max_ts !== 0 or die("Bad maximum timestamp");
 $min_ts <= $max_ts or die("min ts > max ts");
 
 http_response_code(500);
-$query="select ip from bw_max where bps < " . $max_bw . " and bps > " . $min_bw . " and ts < " . $max_ts . " and ts > " . $min_ts;
+$query=pg_escape_string("select ip from bw_max where bps < " . $max_bw . " and bps > " . $min_bw . " and ts < " . $max_ts . " and ts > " . $min_ts);
 $result = pg_query($query) or die('Query failed: ' . pg_last_error());
 
 $first_iter = true;
